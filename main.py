@@ -911,9 +911,9 @@ def continue_conversation(text, phone_number, conversation_state):
         starting_time_str = conversation_state.get('starting_time')
         starting_time = datetime.strptime(starting_time_str, "%H:%M").time()
     
-        # Fetch the booking date from the conversation state
-        booking_date_str = conversation_state.get('meeting_date')  # Assume meeting_date is stored as string in format 'YYYY-MM-DD'
-        booking_date = datetime.strptime(booking_date_str, "%Y-%m-%d").date()
+        # Fetch the booking date from the conversation state (assuming the format is dd/mm/yyyy)
+        booking_date_str = conversation_state.get('meeting_date')  # Assume meeting_date is stored as string in format 'dd/mm/yyyy'
+        booking_date = datetime.strptime(booking_date_str, "%d/%m/%Y").date()
     
         # Get the current date and time in the Asia/Kolkata timezone
         tz = pytz.timezone('Asia/Kolkata')
@@ -932,13 +932,22 @@ def continue_conversation(text, phone_number, conversation_state):
         if booking_date == current_date:  # Only check if booking is for today
             if starting_time == datetime.strptime("18:30", "%H:%M").time():
                 if current_time > starting_time:
-                    if user_input in cab1_stops:
-                        return ask_user_to_wait_or_exit(phone_number, "The cab will not arrive as it has already left. Please choose Cab 2 and wait until 19:30 or exit.")
-                    else:
-                        return jsonify("Cab 1 is no longer available. Please choose Cab 2 or exit.")
+                    return ask_user_to_wait_or_exit(phone_number, "The cab will not arrive as it has already left. Please choose options: 1) **Cab 2** 2) **Exit**.") 
+    
+                    # Update the state for asking late 6:30 batch
+                    conversation_state_collection.update_one(
+                        {"phone_number": phone_number},
+                        {"$set": {
+                            "state": "asking_late_6:30_batch",
+                            "options": ["Cab 2", "Exit"]
+                        }},
+                        upsert=True
+                    )
+            
             elif starting_time == datetime.strptime("19:30", "%H:%M").time():
                 if current_time > starting_time:
-                    return jsonify("Both cabs have already left. Please contact the administrator or choose '2) Exit'.")
+                    conversation_state_collection.delete_one({"phone_number": phone_number})  # Remove conversation state
+                    return jsonify("Both cabs have already left. Please contact the administrative office. The conversation state has been removed.")
     
         # Define available cabs based on the starting time and user drop-off point
         available_cabs = []
@@ -971,10 +980,45 @@ def continue_conversation(text, phone_number, conversation_state):
             return jsonify(option_message + " Please select a cab by entering the option number")
         else:
             return jsonify("No cabs are available for your selected drop-off point.")
+
     
+    if state == 'asking_late_6:30_batch':
+        option = text.strip()  # Normalize input by stripping spaces
+    
+        # Remove spaces and convert to lowercase for consistent matching
+        normalized_option = option.replace(" ", "").lower()
+    
+        # Check for valid options
+        if normalized_option == "cab2" or normalized_option == "1":  # Allow both 'cab2' and '1' as valid inputs for Cab 2
+            # Insert booking for Cab 2
+            cab_name = "Cab 2"
+            existing_ids = [doc.get('booking_id') for doc in cab_booking_collection.find({}, {'_id': 0, 'booking_id': 1}) if doc.get('booking_id') is not None]
+            booking_id = generate_unique_id(existing_ids)
+    
+            # Insert booking into MongoDB
+            cab_booking_collection.insert_one({
+                "booking_id": booking_id,
+                "phone_number": phone_number,
+                "cab_name": cab_name,
+                "starting_time": conversation_state.get('starting_time'),
+                "meeting_date": conversation_state.get('meeting_date'),
+                "dropping_point": conversation_state.get('dropping_point'),
+            })
+    
+            # Remove conversation state
+            conversation_state_collection.delete_one({"phone_number": phone_number})
+            return jsonify(f"{cab_name} has been booked successfully. Your booking ID is {booking_id}.")
+    
+        elif normalized_option == "exit":  # Allow 'exit' with or without spaces
+            # Remove conversation state
+            conversation_state_collection.delete_one({"phone_number": phone_number})
+            return jsonify("Thank you! The conversation has been ended.")
+        
+        else:
+            return jsonify("Invalid option. Please enter either 'Cab 2' or 'Exit'.")
 
 
-
+    
 
 
     elif state == 'asking_cab_selection':
