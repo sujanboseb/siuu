@@ -896,85 +896,76 @@ def continue_conversation(text, phone_number, conversation_state):
 
     if state == 'asking_dropoff_point':
         user_input = text.strip().lower()  # Normalize user input for case-insensitive matching
-
-        # List of drop-off points
+    
+        # List of drop-off points (converted to lowercase for comparison)
         dropoff_points = ["elcot main gate", "madurai kamaraj college", "nagamalai puthukottai", "achampathu", "kalavasal"]
-
-        # Split user input by common delimiters (comma or space) to detect multiple stops
-        user_dropoff_points = re.split(r'[,\s]+', user_input)
-
-        # Filter out empty strings from the user input
-        user_dropoff_points = [point for point in user_dropoff_points if point]
-
-        # Check if the user provided more than one stop
-        if len(user_dropoff_points) > 1:
-            return jsonify("More than one stop has been provided. Please enter only one valid drop-off point.")
-
-        # Extract the first and only drop-off point
-        user_dropoff_point = user_dropoff_points[0]
-
-        # Check if the entered drop-off point is valid
-        if user_dropoff_point not in [point.lower() for point in dropoff_points]:
+    
+        # Normalize spaces by reducing any multiple spaces to a single space
+        user_input = re.sub(r'\s+', ' ', user_input)
+    
+        # Check if the user provided a valid drop-off point by exact match
+        if user_input not in dropoff_points:
             return jsonify("Invalid drop-off point. Please enter a valid drop-off point from the list.")
-
+    
         # Fetch the starting time from the conversation state
         starting_time_str = conversation_state.get('starting_time')
         starting_time = datetime.strptime(starting_time_str, "%H:%M").time()
-
+    
         # Check if the starting time is valid (18:30 or 19:30)
         if not is_valid_time_for_cabs(starting_time):
             return jsonify("Cab time is invalid. Please enter 18:30 or 19:30 as the starting time.")
-
+    
         # Convert the current time to Asia/Kolkata timezone
         tz = pytz.timezone('Asia/Kolkata')
         current_time = datetime.now(tz).time()
-
+    
         # Cab details with stop names
         cab1_stops = ["elcot main gate", "madurai kamaraj college"]  # Cab 1 stops
         cab2_stops = ["elcot main gate", "madurai kamaraj college", "nagamalai puthukottai", "achampathu", "kalavasal"]  # Cab 2 stops
-
+    
         # Logic to handle cab availability based on current time and drop-off point
         if starting_time == datetime.strptime("18:30", "%H:%M").time():
             if current_time > starting_time:
-                if user_dropoff_point in cab1_stops:
+                if user_input in cab1_stops:
                     return ask_user_to_wait_or_exit(phone_number, "The cab will not arrive as it has already left. Please choose Cab 2 and wait until 19:30 or exit.")
                 else:
                     return jsonify("Cab 1 is no longer available. Please choose Cab 2 or exit.")
         elif starting_time == datetime.strptime("19:30", "%H:%M").time():
             if current_time > starting_time:
                 return jsonify("Both cabs have already left. Please contact the administrator or choose '2) Exit'.")
-
+    
         # Define available cabs based on current time and user drop-off point
         available_cabs = []
-
+    
         if starting_time <= datetime.strptime("18:30", "%H:%M").time():
-            if user_dropoff_point in cab1_stops:
+            if user_input in cab1_stops:
                 available_cabs.append("Cab 1")
-            if user_dropoff_point in cab2_stops:
+            if user_input in cab2_stops:
                 available_cabs.append("Cab 2")
         elif datetime.strptime("18:30", "%H:%M").time() < starting_time <= datetime.strptime("19:30", "%H:%M").time():
-            if user_dropoff_point in cab2_stops:
+            if user_input in cab2_stops:
                 available_cabs.append("Cab 2")
-
+    
         # If there are available cabs, show them along with the "Exit" option
         if available_cabs:
             available_cabs.append("Exit")  # Always show the Exit option
             option_message = "Available cabs are: " + " ".join([f"*{i+1}) {cab}*" for i, cab in enumerate(available_cabs)])
-
+    
             # Update the state to 'asking_cab_selection' and store the available cabs
             conversation_state_collection.update_one(
                 {"phone_number": phone_number},
                 {"$set": {
                     "state": "asking_cab_selection",
                     "options": available_cabs,  # Store available cabs for selection
-                    "dropping_point": user_dropoff_point  # Store selected drop-off point
+                    "dropping_point": user_input  # Store selected drop-off point
                 }},
                 upsert=True
             )
-
+    
             return jsonify(option_message + " Please select a cab by entering the option number")
         else:
             return jsonify("No cabs are available for your selected drop-off point.")
+
 
 
 
