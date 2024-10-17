@@ -770,15 +770,25 @@ def continue_conversation(text, phone_number, conversation_state):
     if state == 'asking_hall_name':
         hall_name = text.title()
         print(f"Received hall name: {hall_name}")
-
-        if hall_name not in hall_names_with_webex + small_halls:
-            return jsonify( "Invalid hall name. Please choose from the available options.")
-
+        valid_hall_names = [hall_name for hall_name in hall_names_provided if hall_name in hall_names_with_webex + small_halls]
+        
+         if len(valid_hall_names) > 1:
+        # If multiple valid hall names are provided, ask the user to choose one
+        return jsonify("Please provide only **one** hall name. Multiple hall names detected. Try again.")
+    
+        elif len(valid_hall_names) == 0:
+            # If no valid hall name is provided, return an invalid hall name message
+            return jsonify("Invalid hall name. Please choose from the available options.")
+        
+        # If only one valid hall name is provided, continue with the process
+        hall_name = valid_hall_names[0]
+        print(f"Valid hall name selected: {hall_name}")
+    
+        # Update the conversation state with the selected hall name
         conversation_state_collection.update_one(
             {"phone_number": phone_number},
             {"$set": {"hall_name": hall_name}}
         )
-
         meeting_date = conversation_state.get('meeting_date')
         starting_time = conversation_state.get('starting_time')
         ending_time = conversation_state.get('ending_time')
@@ -904,9 +914,23 @@ def continue_conversation(text, phone_number, conversation_state):
         # Normalize spaces by reducing any multiple spaces to a single space
         user_input = re.sub(r'\s+', ' ', user_input)
     
-        # Check if the user provided a valid drop-off point by exact match
-        if user_input not in dropoff_points:
+        # Split user input by spaces to detect multiple drop-off points
+        dropoff_points_provided = user_input.split(',')
+        
+        # Check if multiple valid drop-off points are provided
+        valid_dropoff_points = [point.strip() for point in dropoff_points_provided if point.strip() in dropoff_points]
+        
+        if len(valid_dropoff_points) > 1:
+            # If multiple valid drop-off points are provided, ask the user to choose one
+            return jsonify("Multiple drop-off points detected. Please provide only one drop-off point from the list.")
+        
+        elif len(valid_dropoff_points) == 0:
+            # If no valid drop-off point is provided, return an invalid drop-off point message
             return jsonify("Invalid drop-off point. Please enter a valid drop-off point from the list.")
+        
+        # If only one valid drop-off point is provided, proceed
+        selected_dropoff_point = valid_dropoff_points[0]
+        print(f"Valid drop-off point selected: {selected_dropoff_point}")
     
         # Fetch the starting time and booking date from the conversation state
         starting_time_str = conversation_state.get('starting_time')
@@ -944,7 +968,7 @@ def continue_conversation(text, phone_number, conversation_state):
                         }},
                         upsert=True
                     )
-            
+    
             elif starting_time == datetime.strptime("19:30", "%H:%M").time():
                 if current_time > starting_time:
                     conversation_state_collection.delete_one({"phone_number": phone_number})  # Remove conversation state
@@ -954,12 +978,12 @@ def continue_conversation(text, phone_number, conversation_state):
         available_cabs = []
     
         if starting_time <= datetime.strptime("18:30", "%H:%M").time():
-            if user_input in cab1_stops:
+            if selected_dropoff_point in cab1_stops:
                 available_cabs.append("Cab 1")
-            if user_input in cab2_stops:
+            if selected_dropoff_point in cab2_stops:
                 available_cabs.append("Cab 2")
         elif datetime.strptime("18:30", "%H:%M").time() < starting_time <= datetime.strptime("19:30", "%H:%M").time():
-            if user_input in cab2_stops:
+            if selected_dropoff_point in cab2_stops:
                 available_cabs.append("Cab 2")
     
         # If there are available cabs, show them along with the "Exit" option
@@ -973,7 +997,7 @@ def continue_conversation(text, phone_number, conversation_state):
                 {"$set": {
                     "state": "asking_cab_selection",
                     "options": available_cabs,  # Store available cabs for selection
-                    "dropping_point": user_input  # Store selected drop-off point
+                    "dropping_point": selected_dropoff_point  # Store selected drop-off point
                 }},
                 upsert=True
             )
@@ -982,16 +1006,38 @@ def continue_conversation(text, phone_number, conversation_state):
         else:
             return jsonify("No cabs are available for your selected drop-off point.")
 
+
     
     if state == 'asking_late_6:30_batch':
         option = text.strip()  # Normalize input by stripping spaces
     
-        # Remove spaces and convert to lowercase for consistent matching
-        normalized_option = option.replace(" ", "").lower()
+        # Normalize input: remove spaces, split by spaces or commas, and convert to lowercase
+        options_provided = re.split(r'\s+|,', option.lower().strip())
     
-        # Check for valid options
-        if normalized_option == "cab2" or normalized_option == "1":  # Allow both 'cab2' and '1' as valid inputs for Cab 2
-            # Insert booking for Cab 2
+        # Valid options for the user to choose
+        valid_options = {
+            "cab2": "Cab 2",
+            "1": "Cab 2",  # Allow '1' as a shortcut for 'Cab 2'
+            "exit": "Exit",
+            "2": "Exit"    # Allow '2' as a shortcut for 'Exit'
+        }
+    
+        # Filter out valid options from user input
+        selected_options = [opt for opt in options_provided if opt in valid_options]
+    
+        # Check if multiple valid options were provided
+        if len(selected_options) > 1:
+            return jsonify("Multiple options detected. Please choose only one option: 1) Cab 2 or 2) Exit.")
+    
+        # If no valid option is provided
+        if len(selected_options) == 0:
+            return jsonify("Invalid option. Please enter either 'Cab 2' or 'Exit'.")
+    
+        # If exactly one valid option is provided
+        selected_option = selected_options[0]
+    
+        if selected_option == "cab2" or selected_option == "1":
+            # Cab 2 booking process
             cab_name = "Cab 2"
             existing_ids = [doc.get('booking_id') for doc in cab_booking_collection.find({}, {'_id': 0, 'booking_id': 1}) if doc.get('booking_id') is not None]
             booking_id = generate_unique_id(existing_ids)
@@ -1010,13 +1056,11 @@ def continue_conversation(text, phone_number, conversation_state):
             conversation_state_collection.delete_one({"phone_number": phone_number})
             return jsonify(f"{cab_name} has been booked successfully. Your booking ID is {booking_id}.")
     
-        elif normalized_option == "exit":  # Allow 'exit' with or without spaces
-            # Remove conversation state
+        elif selected_option == "exit" or selected_option == "2":
+            # Remove conversation state and exit the conversation
             conversation_state_collection.delete_one({"phone_number": phone_number})
             return jsonify("Thank you! The conversation has been ended.")
-        
-        else:
-            return jsonify("Invalid option. Please enter either 'Cab 2' or 'Exit'.")
+
 
 
     
@@ -1025,34 +1069,54 @@ def continue_conversation(text, phone_number, conversation_state):
     elif state == 'asking_cab_selection':
         # Normalize the user input for case-insensitive comparison and trim spaces
         user_input = text.strip().lower().replace(" ", "")  # Remove spaces and convert to lowercase
-    
+        
+        # Split the input by commas, spaces, or other delimiters to detect multiple values
+        user_input_values = re.split(r'[,;\s]+', user_input)  # Splits by comma, semicolon, or space
+        
+        # Remove empty strings in case of extra spaces or delimiters
+        user_input_values = list(filter(None, user_input_values))
+        
         # Fetch the available options (e.g., ['Cab 1', 'Cab 2', 'Exit'])
         options = conversation_state.get('options', [])  # Ensure options is fetched and initialized as a list
-    
-        # Create a mapping for easier comparison
-        option_mapping = {option.lower().replace(" ", ""): option for option in options}
-    
-        # Check if the user input is a valid option by looking it up in the mapping
+        
+        # Create a mapping for easier comparison and mapping numeric inputs to options
+        option_mapping = {
+            "1": "Cab 1",
+            "2": "Cab 2",
+            "3": "Exit"
+        }
+        
+        # Add actual option names to the mapping (e.g., "cab1" -> "Cab 1", "exit" -> "Exit")
+        for option in options:
+            normalized_option = option.lower().replace(" ", "")  # Normalize the option
+            option_mapping[normalized_option] = option  # Map normalized to actual option
+        
+        # Check if multiple values have been provided by the user
+        if len(user_input_values) > 1:
+            return jsonify("Multiple options detected. Please select only one valid option: 1) Cab 1, 2) Cab 2, or 3) Exit.")
+        
+        # Check if the single user input is a valid option by looking it up in the mapping
+        user_input = user_input_values[0]  # Extract the first and only input after ensuring there's only one
         if user_input not in option_mapping:
-            return jsonify("Invalid option. Please choose a valid cab option.")
-    
+            return jsonify("Invalid option. Please choose a valid option: 1) Cab 1, 2) Cab 2, or 3) Exit.")
+        
         # Find the selected option (maintain original casing from the options list)
         selected_option = option_mapping[user_input]  # Fetch original option based on normalized input
-    
+        
         # Handle the "Exit" option
         if selected_option.lower() == "exit":
             # Clear the conversation state for the user (end the session)
             conversation_state_collection.delete_one({"phone_number": phone_number})
             return jsonify("Thank you! The conversation has been ended.")
-    
+        
         else:
             # Determine the cab name based on the selected option
-            cab_name = selected_option  # The user-selected cab (e.g., 'Cab 2')
-    
+            cab_name = selected_option  # The user-selected cab (e.g., 'Cab 1' or 'Cab 2')
+        
             # Fetch existing booking IDs to ensure uniqueness
             existing_ids = [doc.get('booking_id') for doc in cab_booking_collection.find({}, {'_id': 0, 'booking_id': 1}) if doc.get('booking_id') is not None]
             booking_id = generate_unique_id(existing_ids)
-    
+        
             # Insert booking into MongoDB
             cab_booking_collection.insert_one({
                 "booking_id": booking_id,
@@ -1062,10 +1126,11 @@ def continue_conversation(text, phone_number, conversation_state):
                 "meeting_date": conversation_state.get('meeting_date'),
                 "dropping_point": conversation_state.get('dropping_point'),
             })
-    
+        
             # Clear the conversation state after booking
             conversation_state_collection.delete_one({"phone_number": phone_number})
             return jsonify(f"{cab_name} has been booked successfully. Your booking ID is {booking_id}.")
+    
 
 
 
