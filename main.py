@@ -907,34 +907,40 @@ def continue_conversation(text, phone_number, conversation_state):
         if user_input not in dropoff_points:
             return jsonify("Invalid drop-off point. Please enter a valid drop-off point from the list.")
     
-        # Fetch the starting time from the conversation state
+        # Fetch the starting time and booking date from the conversation state
         starting_time_str = conversation_state.get('starting_time')
         starting_time = datetime.strptime(starting_time_str, "%H:%M").time()
+    
+        # Fetch the booking date from the conversation state
+        booking_date_str = conversation_state.get('meeting_date')  # Assume meeting_date is stored as string in format 'YYYY-MM-DD'
+        booking_date = datetime.strptime(booking_date_str, "%Y-%m-%d").date()
+    
+        # Get the current date and time in the Asia/Kolkata timezone
+        tz = pytz.timezone('Asia/Kolkata')
+        current_time = datetime.now(tz).time()
+        current_date = datetime.now(tz).date()
     
         # Check if the starting time is valid (18:30 or 19:30)
         if not is_valid_time_for_cabs(starting_time):
             return jsonify("Cab time is invalid. Please enter 18:30 or 19:30 as the starting time.")
     
-        # Convert the current time to Asia/Kolkata timezone
-        tz = pytz.timezone('Asia/Kolkata')
-        current_time = datetime.now(tz).time()
-    
         # Cab details with stop names
         cab1_stops = ["elcot main gate", "madurai kamaraj college"]  # Cab 1 stops
         cab2_stops = ["elcot main gate", "madurai kamaraj college", "nagamalai puthukottai", "achampathu", "kalavasal"]  # Cab 2 stops
     
-        # Logic to handle cab availability based on current time and drop-off point
-        if starting_time == datetime.strptime("18:30", "%H:%M").time():
-            if current_time > starting_time:
-                if user_input in cab1_stops:
-                    return ask_user_to_wait_or_exit(phone_number, "The cab will not arrive as it has already left. Please choose Cab 2 and wait until 19:30 or exit.")
-                else:
-                    return jsonify("Cab 1 is no longer available. Please choose Cab 2 or exit.")
-        elif starting_time == datetime.strptime("19:30", "%H:%M").time():
-            if current_time > starting_time:
-                return jsonify("Both cabs have already left. Please contact the administrator or choose '2) Exit'.")
+        # Check if the booking is for today and compare current time with the starting time
+        if booking_date == current_date:  # Only check if booking is for today
+            if starting_time == datetime.strptime("18:30", "%H:%M").time():
+                if current_time > starting_time:
+                    if user_input in cab1_stops:
+                        return ask_user_to_wait_or_exit(phone_number, "The cab will not arrive as it has already left. Please choose Cab 2 and wait until 19:30 or exit.")
+                    else:
+                        return jsonify("Cab 1 is no longer available. Please choose Cab 2 or exit.")
+            elif starting_time == datetime.strptime("19:30", "%H:%M").time():
+                if current_time > starting_time:
+                    return jsonify("Both cabs have already left. Please contact the administrator or choose '2) Exit'.")
     
-        # Define available cabs based on current time and user drop-off point
+        # Define available cabs based on the starting time and user drop-off point
         available_cabs = []
     
         if starting_time <= datetime.strptime("18:30", "%H:%M").time():
@@ -965,7 +971,7 @@ def continue_conversation(text, phone_number, conversation_state):
             return jsonify(option_message + " Please select a cab by entering the option number")
         else:
             return jsonify("No cabs are available for your selected drop-off point.")
-
+    
 
 
 
