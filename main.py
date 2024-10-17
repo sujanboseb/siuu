@@ -1327,7 +1327,7 @@ def continue_conversation(text, phone_number, conversation_state):
 
       elif user_input in ["2", "exit"]:
           # Remove the entire conversation state as the user opted to exit
-          conversation_state_collection.dele
+          conversation_state_collection.delete_one({"phone_number": phone_number})
 
           # Inform the user that the old conversation state has been removed
           return jsonify("You have exited the process. The previous conversation state has been removed.")
