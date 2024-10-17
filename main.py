@@ -768,23 +768,27 @@ def continue_conversation(text, phone_number, conversation_state):
     print(f"Conversation state data: {conversation_state}")
 
     if state == 'asking_hall_name':
-        hall_name = text.title()
+        hall_name = text.title().strip()  # Normalize input
+        
+        # Split the hall names provided by the user by commas or other delimiters
+        hall_names_provided = re.split(r'[,;\s]+', hall_name)  # Split by commas, semicolons, spaces, etc.
+        
+        # Remove empty strings from the list in case of extra spaces
+        hall_names_provided = list(filter(None, hall_names_provided))
+    
+        # Check if more than one hall name is provided
+        if len(hall_names_provided) > 1:
+            return jsonify("Multiple hall names detected. Please enter only one hall name.")
+    
+        # Get the first and only hall name (since we've ensured only one is provided)
+        hall_name = hall_names_provided[0]
         print(f"Received hall name: {hall_name}")
-        valid_hall_names = [hall_name for hall_name in hall_names_provided if hall_name in hall_names_with_webex + small_halls]
-        
-        if len(valid_hall_names) > 1:
-        # If multiple valid hall names are provided, ask the user to choose one
-            return jsonify("Please provide only **one** hall name. Multiple hall names detected. Try again.")
     
-        elif len(valid_hall_names) == 0:
-            # If no valid hall name is provided, return an invalid hall name message
+        # Check if the hall name is valid
+        if hall_name not in hall_names_with_webex + small_halls:
             return jsonify("Invalid hall name. Please choose from the available options.")
-        
-        # If only one valid hall name is provided, continue with the process
-        hall_name = valid_hall_names[0]
-        print(f"Valid hall name selected: {hall_name}")
     
-        # Update the conversation state with the selected hall name
+        # Update the conversation state with the provided hall name
         conversation_state_collection.update_one(
             {"phone_number": phone_number},
             {"$set": {"hall_name": hall_name}}
