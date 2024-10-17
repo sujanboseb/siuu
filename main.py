@@ -972,26 +972,36 @@ def continue_conversation(text, phone_number, conversation_state):
 
 
     elif state == 'asking_cab_selection':
-        option = int(text) if text.isdigit() else None
-        options = conversation_state.get('options')  # Fetch options like ['Cab 1', 'Cab 2', 'Exit']
-
-        # Check if the option is valid
-        if option is None or option < 1 or option > len(options):
+        # Normalize the user input for case-insensitive comparison and trim spaces
+        user_input = text.strip().lower()
+    
+        # Fetch the available options (e.g., ['Cab 1', 'Cab 2', 'Exit'])
+        options = conversation_state.get('options', [])  # Ensure options is fetched and initialized as a list
+    
+        # Normalize the options for easier comparison
+        normalized_options = [option.lower() for option in options]
+    
+        # Check if the user input is a valid option
+        if user_input not in normalized_options:
             return jsonify("Invalid option. Please choose a valid cab option.")
-
-        selected_option = options[option - 1]
-
-        if selected_option.lower() == "exit":  # User chose "Exit"
+    
+        # Find the selected option (maintain original casing from options list)
+        selected_option = options[normalized_options.index(user_input)]  # Fetch original option
+    
+        # Handle the "Exit" option
+        if selected_option.lower() == "exit":  
+            # Clear the conversation state for the user (end the session)
             conversation_state_collection.delete_one({"phone_number": phone_number})
-            return jsonify( "Thank you! The conversation has been ended.")
+            return jsonify("Thank you! The conversation has been ended.")
+    
         else:
-            # Determine the selected cab name based on the option
-            cab_name = selected_option  # Get the cab name (e.g., 'Cab 2')
-
+            # Determine the cab name based on the selected option
+            cab_name = selected_option  # The user-selected cab (e.g., 'Cab 2')
+    
             # Fetch existing booking IDs to ensure uniqueness
             existing_ids = [doc.get('booking_id') for doc in cab_booking_collection.find({}, {'_id': 0, 'booking_id': 1}) if doc.get('booking_id') is not None]
             booking_id = generate_unique_id(existing_ids)
-
+    
             # Insert booking into MongoDB
             cab_booking_collection.insert_one({
                 "booking_id": booking_id,
@@ -1001,10 +1011,10 @@ def continue_conversation(text, phone_number, conversation_state):
                 "meeting_date": conversation_state.get('meeting_date'),
                 "dropping_point": conversation_state.get('dropping_point'),
             })
-
-
+    
+            # Clear the conversation state after booking
             conversation_state_collection.delete_one({"phone_number": phone_number})
-            return jsonify( f"{cab_name} has been booked successfully. Your booking ID is {booking_id}.")
+            return jsonify(f"{cab_name} has been booked successfully. Your booking ID is {booking_id}.")
 
 
 
