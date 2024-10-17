@@ -1249,7 +1249,7 @@ def continue_conversation(text, phone_number, conversation_state):
             # Check if the entered time is valid
             if starting_time not in valid_times:
                 # Raise error message if the time is not 18:30 or 19:30
-                error_message = "Cabs are not available at the selected time. Please enter a valid time: 18:30 or 19:30."
+                error_message = "Cabs are not available at the selected time. Please enter a valid time: 6:30pm or 7:30."
                 print(error_message)
 
                 # Remove the 'starting_time' from the conversation state
