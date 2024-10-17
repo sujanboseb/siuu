@@ -34,6 +34,7 @@ CORS(app)  # Enable CORS for all routes
 # Environment variables
 WEBHOOK_VERIFY_TOKEN = os.getenv("WEBHOOK_VERIFY_TOKEN")
 WHATSAPP_API_TOKEN = os.getenv("WHATSAPP_API_TOKEN")
+fastapi_url = os.getenv('FASTAPI_URL')
 PORT = int(os.getenv("PORT", 5000))
 
 
@@ -146,7 +147,7 @@ def handle_message():
     else:
         # Call the external prediction service if there's no ongoing conversation
         try:
-            predict_response = requests.post('https://cfba-34-86-114-17.ngrok-free.app/predict', json={"text": text})
+            predict_response = requests.post(f'{fastapi_url}', json={"text": text})
             predict_response.raise_for_status()
             intent_data = parse_predict_response(predict_response.text)
             print("Parsed response from prediction service:", intent_data)
