@@ -58,8 +58,9 @@ def webhook():
             # Mark the message as being processed to avoid duplicates
             processed_message_ids.add(message_id)
 
-            # Call the handle_message function with the message and phone number
-            response = handle_message({"text": message['text']['body'], "phone_number": sender_phone_number})
+            # Simulate a request to /handle-message endpoint by sending data internally
+            with app.test_request_context('/handle-message', method='POST', json={"text": message['text']['body'], "phone_number": sender_phone_number}):
+                response = handle_message()
 
             # Send the response to the user via WhatsApp
             send_reply_to_user(business_phone_number_id, sender_phone_number, response.get_json(), message_id)
@@ -77,21 +78,22 @@ def webhook():
 
 
 
+
 # Function to send a reply to the user
-def send_reply_to_user(business_phone_number_id, phone_number, message_content, message_id):
-    # Ensure the message content is clean (convert to string if necessary)
-    if isinstance(message_content, dict):
-        cleaned_response = json.dumps(message_content)
+def send_reply_to_user(business_phone_number_id, phone_number, response_data, message_id):
+    # Remove double quotes from the response_data if any (but ensure it's JSON)
+    if isinstance(response_data, str):
+        cleaned_response = response_data.replace('"', '')
     else:
-        cleaned_response = str(message_content)
+        cleaned_response = json.dumps(response_data)
 
     response = requests.post(
         f"https://graph.facebook.com/v20.0/{business_phone_number_id}/messages",
         json={
             "messaging_product": "whatsapp",
             "to": phone_number,
-            "text": {"body": cleaned_response},
-            "context": {"message_id": message_id}
+            "text": {"body": cleaned_response},  # Send the cleaned response
+            "context": {"message_id": message_id}  # Include the original message ID for context
         },
         headers={
             "Authorization": f"Bearer {WHATSAPP_API_TOKEN}",
@@ -99,8 +101,6 @@ def send_reply_to_user(business_phone_number_id, phone_number, message_content, 
         }
     )
 
-    # Log and return the response from the WhatsApp API
-    print(f"Response sent to WhatsApp: {response.json()}")
     return response.json()
 
 
