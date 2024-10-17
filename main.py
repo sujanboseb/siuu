@@ -774,9 +774,9 @@ def continue_conversation(text, phone_number, conversation_state):
         
          if len(valid_hall_names) > 1:
         # If multiple valid hall names are provided, ask the user to choose one
-        return jsonify("Please provide only **one** hall name. Multiple hall names detected. Try again.")
+            return jsonify("Please provide only **one** hall name. Multiple hall names detected. Try again.")
     
-        elif len(valid_hall_names) == 0:
+         elif len(valid_hall_names) == 0:
             # If no valid hall name is provided, return an invalid hall name message
             return jsonify("Invalid hall name. Please choose from the available options.")
         
