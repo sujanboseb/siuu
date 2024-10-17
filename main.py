@@ -1520,8 +1520,8 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
         "phone_number": phone_number,
         "meeting_date": meeting_date,
         "$or": [
-            {"starting_time": {"$lt": ending_time, "$gt": starting_time}},  # New meeting starts during an existing meeting
-            {"ending_time": {"$gt": starting_time, "$lt": ending_time}},    # New meeting ends during an existing meeting
+            {"starting_time": {"$lt": ending_time, "$gte": starting_time}},  # New meeting starts during an existing meeting
+            {"ending_time": {"$gt": starting_time, "$lte": ending_time}},    # New meeting ends during an existing meeting
             {"starting_time": {"$lte": starting_time}, "ending_time": {"$gte": ending_time}}  # New meeting is fully within an existing one
         ]
     })
@@ -1542,7 +1542,7 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
         # Return a response asking for user's choice with two options
         return jsonify(
             f"You already have a meeting booked on {meeting_date} from {existing_start_time} to {existing_end_time}. "
-            f"So please enter the option number ir value from the following: "
+            f"So please enter the option number or value from the following: "
             f"**1)** Start over by entering the hall name again "
             f"**2)** Exit"
         )
@@ -1552,8 +1552,8 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
         "hall_name": hall_name,
         "meeting_date": meeting_date,
         "$or": [
-            {"starting_time": {"$lt": ending_time, "$gt": starting_time}},  # Hall booked at this time
-            {"ending_time": {"$gt": starting_time, "$lt": ending_time}},    # Hall booked at this time
+            {"starting_time": {"$lt": ending_time, "$gte": starting_time}},  # Hall booked at this time
+            {"ending_time": {"$gt": starting_time, "$lte": ending_time}},    # Hall booked at this time
             {"starting_time": {"$lte": starting_time}, "ending_time": {"$gte": ending_time}}  # Hall fully booked during this time
         ]
     })
@@ -1571,7 +1571,7 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
         )
         print("Updated state to 'choosing_conflict_option'")
 
-        return jsonify("The selected hall is not available at the requested time. Please enter **1** to choose a **different hall** or **2** to choose a **different date**. or enter the darked option values ")
+        return jsonify("The selected hall is not available at the requested time. Please enter **1** to choose a **different hall** or **2** to choose a **different date**.")
 
     # Step 4: No conflicts, proceed with booking
     booking_id = meeting_booking_collection.insert_one({
@@ -1587,6 +1587,14 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
     print("Booking successful and conversation state removed.")
 
     return jsonify(f"Meeting successfully booked at {hall_name} on {meeting_date} from {starting_time} to {ending_time} with meeting id {bookings_id}")
+
+   
+
+    
+
+   
+   
+
 
 def get_available_time_slots(hall_name, meeting_date):
     # Define the hall's opening and closing times
