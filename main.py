@@ -697,9 +697,9 @@ def handle_cab_selection(phone_number, starting_time, meeting_date):
             # Inform the user that they already have a booking
             message = (f"You already have a cab booked on {meeting_date} "
                        f"with Booking ID: **{booking_id}**, drop-off point: **{drop_off_point}**. time:**{starting_times} "
-                       "Please enter the one of the following option number or its value:"
-                       "**1)** Re-enter the details starting from the meeting date"
-                       "**2)** Exit.")
+                       "Please enter the one of the following option number or its value or its highlighted word:"
+                       "**1)**  **Re-enter** the details starting from the meeting date"
+                       "**2)**  **Exit**")
 
             # Update the state to asking for cab options
             conversation_state_collection.update_one(
@@ -1023,23 +1023,23 @@ def continue_conversation(text, phone_number, conversation_state):
 
     elif state == 'asking_cab_selection':
         # Normalize the user input for case-insensitive comparison and trim spaces
-        user_input = text.strip().lower()
+        user_input = text.strip().lower().replace(" ", "")  # Remove spaces and convert to lowercase
     
         # Fetch the available options (e.g., ['Cab 1', 'Cab 2', 'Exit'])
         options = conversation_state.get('options', [])  # Ensure options is fetched and initialized as a list
     
-        # Normalize the options for easier comparison
-        normalized_options = [option.lower() for option in options]
+        # Create a mapping for easier comparison
+        option_mapping = {option.lower().replace(" ", ""): option for option in options}
     
-        # Check if the user input is a valid option
-        if user_input not in normalized_options:
+        # Check if the user input is a valid option by looking it up in the mapping
+        if user_input not in option_mapping:
             return jsonify("Invalid option. Please choose a valid cab option.")
     
-        # Find the selected option (maintain original casing from options list)
-        selected_option = options[normalized_options.index(user_input)]  # Fetch original option
+        # Find the selected option (maintain original casing from the options list)
+        selected_option = option_mapping[user_input]  # Fetch original option based on normalized input
     
         # Handle the "Exit" option
-        if selected_option.lower() == "exit":  
+        if selected_option.lower() == "exit":
             # Clear the conversation state for the user (end the session)
             conversation_state_collection.delete_one({"phone_number": phone_number})
             return jsonify("Thank you! The conversation has been ended.")
@@ -1065,6 +1065,7 @@ def continue_conversation(text, phone_number, conversation_state):
             # Clear the conversation state after booking
             conversation_state_collection.delete_one({"phone_number": phone_number})
             return jsonify(f"{cab_name} has been booked successfully. Your booking ID is {booking_id}.")
+
 
 
 
@@ -1275,7 +1276,7 @@ def continue_conversation(text, phone_number, conversation_state):
       user_input = text.strip().lower()  # Normalize user input for case-insensitive matching
 
       # Check the user input for both 1 and variations of "Re-enter the details starting from the meeting date"
-      if user_input == '1' or 're-enter the details starting from the meeting date' in user_input.lower():
+      if user_input == '1' or 're-enter the details starting from the meeting date'  or 'reenter' or 'Re-enter'in user_input.lower():
         # Remove everything from the conversation state except intent and phone number
         conversation_state_collection.update_one(
             {"phone_number": phone_number},
@@ -1293,7 +1294,7 @@ def continue_conversation(text, phone_number, conversation_state):
         return jsonify("Please provide the meeting date in **dd/mm/yyyy** format.")
 
     # If user chose to exit
-      elif user_input == '2' or user_input == 'exit':
+      elif user_input == '2' or 'exit' or 'Exit' in user_input.lower():
         # Remove everything from the conversation state
         conversation_state_collection.delete_one({"phone_number": phone_number})
         # Send a farewell message
