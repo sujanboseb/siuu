@@ -1708,7 +1708,7 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
         return jsonify("The selected hall is not available at the requested time. Please enter **1** to choose a **different hall** or **2** to choose a **different date**.")
 
     # Step 4: No conflicts, proceed with booking
-    booking_id = meeting_booking_collection.insert_one({
+    booking_ids = meeting_booking_collection.insert_one({
         "phone_number": phone_number,
         "hall_name": hall_name,
         "booking_id": booking_id,
