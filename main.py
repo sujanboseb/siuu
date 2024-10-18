@@ -837,14 +837,23 @@ def continue_conversation(text, phone_number, conversation_state):
 
         # Check if more than two cab booking IDs were provided
         if len(cab_booking_ids) > 2:
-            return jsonify( "You have provided more than two cab booking IDs. Please provide a maximum of two valid booking IDs.")
+            return jsonify("You have provided more than two cab booking IDs. Please provide a maximum of two valid booking IDs.")
+
+        # Initialize a list to track invalid IDs (either incorrect format or too short)
+        invalid_ids = []
 
         # Check each ID for validity
-        invalid_ids = [cab_booking_id for cab_booking_id in cab_booking_ids if not valid_id_format.match(cab_booking_id)]
+        for cab_booking_id in cab_booking_ids:
+            # Check if the ID length is less than 7 (invalid)
+            if len(cab_booking_id) < 7:
+                invalid_ids.append(cab_booking_id)
+            # Check if the ID does not match the valid format
+            elif not valid_id_format.match(cab_booking_id):
+                invalid_ids.append(cab_booking_id)
 
         # If there are any invalid IDs, show an error
         if invalid_ids:
-            return jsonify( f"Invalid cab booking ID(s): {', '.join(invalid_ids)}. Please provide a valid ID (e.g., C123456).")
+            return jsonify(f"Invalid cab booking ID(s): {', '.join(invalid_ids)}. Cab booking IDs must start with 'C' and be followed by 6 digits (e.g., C123456). Please provide valid ID(s).")
 
         # If validation passes, clear any error and update the state with the valid cab booking ID
         if cab_booking_ids:
