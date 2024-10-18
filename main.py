@@ -185,10 +185,10 @@ def handle_message():
             if intent == 'Greetings':
               # Respond with the message for meeting and cab management
               greeting_message = (
-                  "1.This number is for meeting and cab management.`"
-                  "2.You can check  your meetings from the past dates.` "
-                  "3.Please provide the ** meeting date ** in **'dd/mm/yyyy'** format and the ** time **  in **'hh:mm AM/PM'** format.`"
-                  "4.if the text has been **STOP** means then u can satrt new conversation ok `"
+                  "1.This number is for meeting and cab management.%0a"
+                  "2.You can check  your meetings from the past dates.%0a "
+                  "3.Please provide the ** meeting date ** in **'dd/mm/yyyy'** format and the ** time **  in **'hh:mm AM/PM'** format.%0a"
+                  "4.if the text has been **STOP** means then u can satrt new conversation ok %0a"
               )
               return jsonify(greeting_message)
 
