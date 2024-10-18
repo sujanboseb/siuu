@@ -1671,10 +1671,10 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
         # Return a response asking for user's choice with two options and show the conflict details and available times
         return jsonify(
             f"You already have a meeting booked at **{existing_hall_name}** on {meeting_date} from {existing_start_time} to {existing_end_time}. "
-            f"Here are your available time slots for the day (from 12 AM to 12 PM):\n"
-            f"{available_time_msg}\n"
-            f"So please enter the option number or value from the following:\n"
-            f"**1)** Start over by entering the hall name again\n"
+            f"Here are your available time slots for the day (from 12 AM to 12 PM):"
+            f"{available_time_msg}"
+            f"So please enter the option number or value from the following:"
+            f"**1)** Start over by entering the hall name again"
             f"**2)** Exit"
         )
 
@@ -1720,6 +1720,24 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
     return jsonify(f"Meeting successfully booked at {hall_name} on {meeting_date} from {starting_time} to {ending_time} with meeting id {booking_id}")
 
    
+from datetime import datetime, timedelta
+
+def calculate_available_time_slots(conflict_start, conflict_end):
+    # Define the day starting and ending times (12 AM to 12 PM)
+    day_start = datetime.strptime("00:00", "%H:%M").time()
+    day_end = datetime.strptime("12:00", "%H:%M").time()
+
+    available_slots = []
+
+    # Slot 1: Before the conflicting meeting (12 AM to conflict start time)
+    if conflict_start > day_start:
+        available_slots.append((day_start, conflict_start))
+
+    # Slot 2: After the conflicting meeting (conflict end time to 12 PM)
+    if conflict_end < day_end:
+        available_slots.append((conflict_end, day_end))
+
+    return available_slots
 
     
 
