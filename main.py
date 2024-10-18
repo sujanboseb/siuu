@@ -147,7 +147,7 @@ def handle_message():
     else:
         # Call the external prediction service if there's no ongoing conversation
         try:
-            predict_response = requests.post(f'{fastapi_url}', json={"text": text})
+            predict_response = requests.post('https://5360-35-237-136-225.ngrok-free.app/predict', json={"text": text})
             predict_response.raise_for_status()
             intent_data = parse_predict_response(predict_response.text)
             print("Parsed response from prediction service:", intent_data)
@@ -182,17 +182,15 @@ def handle_message():
                     # Proceed to ask for meeting_id if not already provided
                     return meeting_cancelling_id(phone_number, meeting_booking_id)
 
-          if intent == 'Greetings':
-                # Respond with the message for meeting and cab management
-                greeting_message = (
-                    "1. This number is for meeting and cab management. `"
-                    "2. You can check your meetings from the past dates. `"
-                    "3. Please provide the **meeting date** in **'dd/mm/yyyy'** format and the **time** in **'hh:mm AM/PM'** format. `"
-                    "4. If the text has been **STOP** means then you can start a new conversation. `"
-                    "5. Cab booking time can be around **6:30pm** or **7:30pm** only. `"
-                )
-                return jsonify(greeting_message)
-
+            if intent == 'Greetings':
+              # Respond with the message for meeting and cab management
+              greeting_message = (
+                  "1.This number is for meeting and cab management.`"
+                  "2.You can check  your meetings from the past dates.` "
+                  "3.Please provide the ** meeting date ** in **'dd/mm/yyyy'** format and the ** time **  in **'hh:mm AM/PM'** format.`"
+                  "4.if the text has been **STOP** means then u can satrt new conversation ok `"
+              )
+              return jsonify(greeting_message)
 
             elif intent == 'cab_cancelling':
                 # Check if meeting_id is provided
@@ -242,6 +240,7 @@ def handle_message():
             return jsonify( "Failed to get intent from prediction service"), 500
 
     return jsonify( "Processed successfully")
+
 
 def handle_meeting_booking_stats(phone_number, meeting_date):
     # Parse the provided meeting date string into a date object
