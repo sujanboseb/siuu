@@ -1720,7 +1720,7 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
     booking_ids = meeting_booking_collection.insert_one({
         "phone_number": phone_number,
         "hall_name": hall_name,
-        "booking_id": booking_id,
+        "bookings_id": booking_id,
         "meeting_date": meeting_date,
         "starting_time": starting_time,
         "ending_time": ending_time
