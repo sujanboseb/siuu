@@ -187,8 +187,8 @@ def handle_message():
               greeting_message = (
                   "1.This number is for meeting and cab management.\n"
                   "2.You can check  your meetings from the past dates.\n "
-                  "3.Please provide the * meeting date * in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
-                  "4.if the text has been *STOP* means then u can satrt new conversation ok %0a \n"
+                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
+                  "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
               )
               return jsonify(greeting_message)
 
@@ -1147,6 +1147,7 @@ def continue_conversation(text, phone_number, conversation_state):
                 "starting_time": conversation_state.get('starting_time'),
                 "meeting_date": conversation_state.get('meeting_date'),
                 "dropping_point": conversation_state.get('dropping_point'),
+                "status":"cab_has_been_booked_successfully"
             })
         
             # Clear the conversation state after booking
@@ -1691,12 +1692,12 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
 
         # Return a response asking for user's choice with two options and show the conflict details and available times
         return jsonify(
-            f"You already have a meeting booked at **{existing_hall_name}** on {meeting_date} from {existing_start_time} to {existing_end_time}. "
+            f"You already have a meeting booked at *{existing_hall_name}* on {meeting_date} from {existing_start_time} to {existing_end_time}. "
             f"Here are your available time slots for the day (from 12 AM to 12 PM):\n"
             f"{available_time_msg}\n"
             f"So please enter the option number or value from the following:\n"
-            f"**1)** Start over by entering the hall name again\n"
-            f"**2)** Exit"
+            f"*1)* Start over by entering the hall name again\n"
+            f"*2)* Exit"
         )
 
     # Step 3: Check if the selected hall has any conflicting bookings at the requested time
@@ -1732,7 +1733,8 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
         "bookings_id": booking_id,
         "meeting_date": meeting_date,
         "starting_time": starting_time,
-        "ending_time": ending_time
+        "ending_time": ending_time,
+        "status": "meeting_has_been_booked"
     }).inserted_id
 
     conversation_state_collection.delete_one({"phone_number": phone_number})
