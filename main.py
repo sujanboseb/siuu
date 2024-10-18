@@ -1638,7 +1638,7 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
     existing_ids = list(set(existing_ids))
 
     # Generate a unique booking ID for the new booking
-    booking_id = generate_unique_id(existing_ids)
+    booking_id = generate_unique_ids(existing_ids)
 
     # Step 1: Check if the user has a conflicting meeting on the same date where the times overlap
     user_conflicting_booking = meeting_booking_collection.find_one({
