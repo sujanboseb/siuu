@@ -1619,8 +1619,18 @@ def continue_conversation(text, phone_number, conversation_state):
 
 
 
+from datetime import datetime
+
 def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting_time, ending_time):
     print(f"Checking for conflicts for hall: {hall_name}, date: {meeting_date}, start: {starting_time}, end: {ending_time}")
+
+    # Convert meeting_date and time strings to datetime objects for comparison
+    try:
+        meeting_date_dt = datetime.strptime(meeting_date, "%d/%m/%Y")  # Convert meeting date to datetime object
+        starting_time_dt = datetime.strptime(starting_time, "%H:%M").time()  # Convert starting time to time object
+        ending_time_dt = datetime.strptime(ending_time, "%H:%M").time()  # Convert ending time to time object
+    except ValueError as e:
+        return jsonify(f"Error processing date or time: {str(e)}")
 
     existing_ids = []
 
@@ -1640,11 +1650,11 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
     # Step 1: Check if the user has a conflicting meeting on the same date where the times overlap
     user_conflicting_booking = meeting_booking_collection.find_one({
         "phone_number": phone_number,
-        "meeting_date": meeting_date,
+        "meeting_date": meeting_date,  # Date comparison is based on string match
         "$or": [
-            {"starting_time": {"$lt": ending_time, "$gte": starting_time}},  # New meeting starts during an existing meeting
-            {"ending_time": {"$gt": starting_time, "$lte": ending_time}},    # New meeting ends during an existing meeting
-            {"starting_time": {"$lte": starting_time}, "ending_time": {"$gte": ending_time}}  # New meeting is fully within an existing one
+            {"starting_time": {"$lt": ending_time_dt, "$gte": starting_time_dt}},  # New meeting starts during an existing meeting
+            {"ending_time": {"$gt": starting_time_dt, "$lte": ending_time_dt}},    # New meeting ends during an existing meeting
+            {"starting_time": {"$lte": starting_time_dt}, "ending_time": {"$gte": ending_time_dt}}  # New meeting is fully within an existing one
         ]
     })
 
@@ -1671,10 +1681,10 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
         # Return a response asking for user's choice with two options and show the conflict details and available times
         return jsonify(
             f"You already have a meeting booked at **{existing_hall_name}** on {meeting_date} from {existing_start_time} to {existing_end_time}. "
-            f"Here are your available time slots for the day (from 12 AM to 12 PM):"
-            f"{available_time_msg}"
-            f"So please enter the option number or value from the following:"
-            f"**1)** Start over by entering the hall name again"
+            f"Here are your available time slots for the day (from 12 AM to 12 PM):\n"
+            f"{available_time_msg}\n"
+            f"So please enter the option number or value from the following:\n"
+            f"**1)** Start over by entering the hall name again\n"
             f"**2)** Exit"
         )
 
@@ -1683,9 +1693,9 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
         "hall_name": hall_name,
         "meeting_date": meeting_date,
         "$or": [
-            {"starting_time": {"$lt": ending_time, "$gte": starting_time}},  # Hall booked at this time
-            {"ending_time": {"$gt": starting_time, "$lte": ending_time}},    # Hall booked at this time
-            {"starting_time": {"$lte": starting_time}, "ending_time": {"$gte": ending_time}}  # Hall fully booked during this time
+            {"starting_time": {"$lt": ending_time_dt, "$gte": starting_time_dt}},  # Hall booked at this time
+            {"ending_time": {"$gt": starting_time_dt, "$lte": ending_time_dt}},    # Hall booked at this time
+            {"starting_time": {"$lte": starting_time_dt}, "ending_time": {"$gte": ending_time_dt}}  # Hall fully booked during this time
         ]
     })
 
@@ -1719,13 +1729,14 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
 
     return jsonify(f"Meeting successfully booked at {hall_name} on {meeting_date} from {starting_time} to {ending_time} with meeting id {booking_id}")
 
+
    
 from datetime import datetime, timedelta
 
 def calculate_available_time_slots(conflict_start, conflict_end):
-    # Define the day starting and ending times (12 AM to 12 PM)
+    # Define the day starting and ending times (12 AM to 11:59 PM)
     day_start = datetime.strptime("00:00", "%H:%M").time()
-    day_end = datetime.strptime("12:00", "%H:%M").time()
+    day_end = datetime.strptime("23:59", "%H:%M").time()
 
     available_slots = []
 
@@ -1733,11 +1744,12 @@ def calculate_available_time_slots(conflict_start, conflict_end):
     if conflict_start > day_start:
         available_slots.append((day_start, conflict_start))
 
-    # Slot 2: After the conflicting meeting (conflict end time to 12 PM)
+    # Slot 2: After the conflicting meeting (conflict end time to 11:59 PM)
     if conflict_end < day_end:
         available_slots.append((conflict_end, day_end))
 
     return available_slots
+
 
     
 
