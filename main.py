@@ -877,16 +877,25 @@ def continue_conversation(text, phone_number, conversation_state):
 
         # Check if more than two meeting booking IDs were provided
         if len(meeting_booking_ids) > 2:
-            return jsonify( "You have provided more than two meeting booking IDs. Please provide a maximum of two valid booking IDs.")
+            return jsonify("You have provided more than two meeting booking IDs. Please provide a maximum of two valid booking IDs.")
+
+        # Initialize a list to track invalid IDs (either incorrect format or too short)
+        invalid_ids = []
 
         # Check each ID for validity
-        invalid_ids = [meeting_booking_id for meeting_booking_id in meeting_booking_ids if not valid_id_format.match(meeting_booking_id)]
+        for meeting_booking_id in meeting_booking_ids:
+            # Check if the ID length is less than 7 (invalid)
+            if len(meeting_booking_id) < 7:
+                invalid_ids.append(meeting_booking_id)
+            # Check if the ID does not match the valid format
+            elif not valid_id_format.match(meeting_booking_id):
+                invalid_ids.append(meeting_booking_id)
 
         # If there are any invalid IDs, show an error
         if invalid_ids:
-            return jsonify( f"Invalid Meeting booking ID(s): {', '.join(invalid_ids)}. Please provide a valid ID (e.g., M123456).")
+            return jsonify(f"Invalid Meeting booking ID(s): {', '.join(invalid_ids)}. Meeting booking IDs must start with 'M' and be followed by 6 digits (e.g., M123456). Please provide valid ID(s).")
 
-        # If validation passes, clear any error and update the state with the valid cab booking ID
+        # If validation passes, clear any error and update the state with the valid meeting booking ID
         if meeting_booking_ids:
             meeting_booking_id = meeting_booking_ids[0]  # Take the first valid ID
 
@@ -902,7 +911,7 @@ def continue_conversation(text, phone_number, conversation_state):
 
             print(f"Valid meeting booking ID received: {meeting_booking_id}")
 
-            # Proceed with the cab cancellation
+            # Proceed with the meeting cancellation
             return meeting_cancelling_id(phone_number, meeting_booking_id)
 
 
