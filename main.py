@@ -1620,24 +1620,17 @@ def continue_conversation(text, phone_number, conversation_state):
 
 
 from datetime import datetime
+import pymongo
 
 def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting_time, ending_time):
     print(f"Checking for conflicts for hall: {hall_name}, date: {meeting_date}, start: {starting_time}, end: {ending_time}")
 
-    # Convert meeting_date and time strings to datetime objects for comparison
-    try:
-        meeting_date_dt = datetime.strptime(meeting_date, "%d/%m/%Y")  # Convert meeting date to datetime object
-        starting_time_dt = datetime.strptime(starting_time, "%H:%M").time()  # Convert starting time to time object
-        ending_time_dt = datetime.strptime(ending_time, "%H:%M").time()  # Convert ending time to time object
-    except ValueError as e:
-        return jsonify(f"Error processing date or time: {str(e)}")
-
     existing_ids = []
 
     # Fetch all existing booking IDs
-    for doc in meeting_booking_collection.find({}, {'_id': 0, 'booking_ids': 1}):
-        if 'booking_ids' in doc:
-            existing_ids.append(doc['booking_ids'])
+    for doc in meeting_booking_collection.find({}, {'_id': 0, 'booking_id': 1}):
+        if 'booking_id' in doc:
+            existing_ids.append(doc['booking_id'])
         else:
             existing_ids.append(0)  # Handle if no booking ID exists
 
@@ -1645,16 +1638,16 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
     existing_ids = list(set(existing_ids))
 
     # Generate a unique booking ID for the new booking
-    bookings_id = generate_unique_id(existing_ids)
+    booking_id = generate_unique_id(existing_ids)
 
     # Step 1: Check if the user has a conflicting meeting on the same date where the times overlap
     user_conflicting_booking = meeting_booking_collection.find_one({
         "phone_number": phone_number,
-        "meeting_date": meeting_date,  # Date comparison is based on string match
+        "meeting_date": meeting_date,
         "$or": [
-            {"starting_time": {"$lt": ending_time_dt, "$gte": starting_time_dt}},  # New meeting starts during an existing meeting
-            {"ending_time": {"$gt": starting_time_dt, "$lte": ending_time_dt}},    # New meeting ends during an existing meeting
-            {"starting_time": {"$lte": starting_time_dt}, "ending_time": {"$gte": ending_time_dt}}  # New meeting is fully within an existing one
+            {"starting_time": {"$lt": ending_time, "$gte": starting_time}},  # New meeting starts during an existing meeting
+            {"ending_time": {"$gt": starting_time, "$lte": ending_time}},    # New meeting ends during an existing meeting
+            {"starting_time": {"$lte": starting_time}, "ending_time": {"$gte": ending_time}}  # New meeting is fully within an existing one
         ]
     })
 
@@ -1665,10 +1658,10 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
         existing_hall_name = user_conflicting_booking['hall_name']  # Fetch the hall name for the conflicting booking
 
         # Calculate available time slots (from 12 AM to 12 PM)
-        available_slots = calculate_available_time_slots(existing_start_time, existing_end_time)
+        available_slots = get_available_time_slotss(phone_number, meeting_date)
 
         # Format available time slots for the response
-        available_time_msg = format_available_time_slots(available_slots)
+        available_time_msg = "\n".join(available_slots)
 
         # Update state to ask the user for next steps: start over or exit
         conversation_state_collection.update_one(
@@ -1693,9 +1686,9 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
         "hall_name": hall_name,
         "meeting_date": meeting_date,
         "$or": [
-            {"starting_time": {"$lt": ending_time_dt, "$gte": starting_time_dt}},  # Hall booked at this time
-            {"ending_time": {"$gt": starting_time_dt, "$lte": ending_time_dt}},    # Hall booked at this time
-            {"starting_time": {"$lte": starting_time_dt}, "ending_time": {"$gte": ending_time_dt}}  # Hall fully booked during this time
+            {"starting_time": {"$lt": ending_time, "$gte": starting_time}},  # Hall booked at this time
+            {"ending_time": {"$gt": starting_time, "$lte": ending_time}},    # Hall booked at this time
+            {"starting_time": {"$lte": starting_time}, "ending_time": {"$gte": ending_time}}  # Hall fully booked during this time
         ]
     })
 
@@ -1718,7 +1711,7 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
     booking_id = meeting_booking_collection.insert_one({
         "phone_number": phone_number,
         "hall_name": hall_name,
-        "bookings_id": bookings_id,
+        "booking_id": booking_id,
         "meeting_date": meeting_date,
         "starting_time": starting_time,
         "ending_time": ending_time
@@ -1727,28 +1720,46 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
     conversation_state_collection.delete_one({"phone_number": phone_number})
     print("Booking successful and conversation state removed.")
 
-    return jsonify(f"Meeting successfully booked at {hall_name} on {meeting_date} from {starting_time} to {ending_time} with meeting id {booking_id}")
+    return jsonify(f"Meeting successfully booked at {hall_name} on {meeting_date} from {starting_time} to {ending_time} with booking ID {booking_id}")
 
+def get_available_time_slotss(phone_number, meeting_date):
+    # Define opening and closing times
+    opening_time = datetime.strptime('00:00', '%H:%M')
+    closing_time = datetime.strptime('23:59', '%H:%M')
 
-   
-from datetime import datetime, timedelta
-
-def calculate_available_time_slots(conflict_start, conflict_end):
-    # Define the day starting and ending times (12 AM to 11:59 PM)
-    day_start = datetime.strptime("00:00", "%H:%M").time()
-    day_end = datetime.strptime("23:59", "%H:%M").time()
+    # Find existing bookings for the specified phone number and date
+    bookings = meeting_booking_collection.find({
+        "phone_number": phone_number,  # Ensure the key matches your MongoDB schema
+        "meeting_date": meeting_date     # Ensure the key matches your MongoDB schema
+    }).sort("starting_time", pymongo.ASCENDING)
 
     available_slots = []
+    current_time = opening_time
 
-    # Slot 1: Before the conflicting meeting (12 AM to conflict start time)
-    if conflict_start > day_start:
-        available_slots.append((day_start, conflict_start))
+    # Iterate through existing bookings to determine available slots
+    for booking in bookings:
+        booking_start = datetime.strptime(booking['starting_time'], '%H:%M')
+        booking_end = datetime.strptime(booking['ending_time'], '%H:%M')
 
-    # Slot 2: After the conflicting meeting (conflict end time to 11:59 PM)
-    if conflict_end < day_end:
-        available_slots.append((conflict_end, day_end))
+        # Check if there is free time before the next booking
+        if current_time < booking_start:
+            # Add available slot before the next booking
+            available_slots.append(f"{current_time.strftime('%H:%M')} - {booking_start.strftime('%H:%M')}")
 
-    return available_slots
+        # Update current time to the end of the current booking
+        current_time = max(current_time, booking_end)
+
+    # Add a slot for the remaining time if available
+    if current_time < closing_time:
+        available_slots.append(f"{current_time.strftime('%H:%M')} - {closing_time.strftime('%H:%M')}")
+
+    # Return available slots or indicate no slots are available
+    return available_slots if available_slots else ["No available slots"]
+
+
+
+
+
 
 
     
