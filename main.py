@@ -182,7 +182,7 @@ def handle_message():
                     # Proceed to ask for meeting_id if not already provided
                     return meeting_cancelling_id(phone_number, meeting_booking_id)
 
-         if intent == 'Greetings':
+          if intent == 'Greetings':
                 # Respond with the message for meeting and cab management
                 greeting_message = (
                     "1. This number is for meeting and cab management. `"
