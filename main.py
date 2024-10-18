@@ -1631,11 +1631,11 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
         else:
             existing_ids.append(0)  # Handle if no booking ID exists
 
-    # Ensure unique booking IDs
+    # Ensure unique booking IDs by removing duplicates
     existing_ids = list(set(existing_ids))
 
     # Generate a unique booking ID for the new booking
-    bookings_id = generate_unique_ids(existing_ids)
+    bookings_id = generate_unique_id(existing_ids)
 
     # Step 1: Check if the user has a conflicting meeting on the same date where the times overlap
     user_conflicting_booking = meeting_booking_collection.find_one({
@@ -1652,6 +1652,13 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
         # Step 2: Inform the user about the conflict and provide options
         existing_start_time = user_conflicting_booking['starting_time']
         existing_end_time = user_conflicting_booking['ending_time']
+        existing_hall_name = user_conflicting_booking['hall_name']  # Fetch the hall name for the conflicting booking
+
+        # Calculate available time slots (from 12 AM to 12 PM)
+        available_slots = calculate_available_time_slots(existing_start_time, existing_end_time)
+
+        # Format available time slots for the response
+        available_time_msg = format_available_time_slots(available_slots)
 
         # Update state to ask the user for next steps: start over or exit
         conversation_state_collection.update_one(
@@ -1661,11 +1668,13 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
             }}
         )
 
-        # Return a response asking for user's choice with two options
+        # Return a response asking for user's choice with two options and show the conflict details and available times
         return jsonify(
-            f"You already have a meeting booked on {meeting_date} from {existing_start_time} to {existing_end_time}. "
-            f"So please enter the option number or value from the following: "
-            f"**1)** Start over by entering the hall name again "
+            f"You already have a meeting booked at **{existing_hall_name}** on {meeting_date} from {existing_start_time} to {existing_end_time}. "
+            f"Here are your available time slots for the day (from 12 AM to 12 PM):\n"
+            f"{available_time_msg}\n"
+            f"So please enter the option number or value from the following:\n"
+            f"**1)** Start over by entering the hall name again\n"
             f"**2)** Exit"
         )
 
@@ -1708,7 +1717,7 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
     conversation_state_collection.delete_one({"phone_number": phone_number})
     print("Booking successful and conversation state removed.")
 
-    return jsonify(f"Meeting successfully booked at {hall_name} on {meeting_date} from {starting_time} to {ending_time} with meeting id {bookings_id}")
+    return jsonify(f"Meeting successfully booked at {hall_name} on {meeting_date} from {starting_time} to {ending_time} with meeting id {booking_id}")
 
    
 
