@@ -313,7 +313,7 @@ def handle_cab_booking_stats(phone_number, meeting_date):
     # Fetch cab bookings for the provided phone number within the date range
     cab_bookings = list(cab_booking_collection.find({
         "phone_number": phone_number,
-        "status": "meeting_has_been_cancelled",
+        "status": "cab_has_been_cancelled",
         "meeting_date": {
             "$gte": start_date.strftime('%d/%m/%Y'),  # Start date (7 days before)
             "$lte": end_date.strftime('%d/%m/%Y')     # End date (1 day before the provided meeting date)
@@ -330,16 +330,17 @@ def handle_cab_booking_stats(phone_number, meeting_date):
     # Iterate through the cab bookings and format the details
     for booking in cab_bookings:
         booking_info = (
-            f"*Booking ID:* {booking.get('booking_id', 'N/A')}  "
-            f"*Meeting Date:* {booking.get('meeting_date', 'N/A')}  "
-            f"*Drop-off Point:* {booking.get('dropping_point', 'N/A')}  "
-            f"*Cab Name:* {booking.get('cab_name', 'N/A')}  "
-            f"*Starting Time:* {booking.get('starting_time', 'N/A')}  "
+            f"*Booking ID:* {booking.get('booking_id', 'N/A')}\n"
+            f"*Meeting Date:* {booking.get('meeting_date', 'N/A')}\n"
+            f"*Drop-off Point:* {booking.get('dropping_point', 'N/A')}\n"
+            f"*Cab Name:* {booking.get('cab_name', 'N/A')}\n"
+            f"*Starting Time:* {booking.get('starting_time', 'N/A')}\n"
+            "------------------------\n"
         )
         booking_list.append(booking_info)
 
-    # Join the list of bookings with a visual separator
-    response_message = "------------------------  ".join(booking_list)
+    # Join the list of bookings with a newline separator
+    response_message = "\n".join(booking_list)
 
     # Remove the conversation state for the given phone number
     conversation_state_collection.delete_one({"phone_number": phone_number})
@@ -399,6 +400,11 @@ def meeting_cancelling_id(phone_number, meeting_booking_id):
     if not meeting_booking:
         # If the cab booking ID does not exist, inform the user and ask for the correct ID again
         return jsonify( f"Meeting booking ID {meeting_booking_id} not found. Please provide a valid meeting booking ID.")
+    
+    if meeting_booking.get('status') == "meeting_has_been_cancelled":
+    # Inform the user that the meeting has already been canceled
+    return jsonify(f"Meeting booking ID {meeting_booking_id} has already been canceled.")
+
 
     # Check if the booking date is in the past
     meeting_date = meeting_booking.get('meeting_date')
@@ -467,6 +473,11 @@ def cab_cancelling_id(phone_number, cab_booking_id):
             }
         )
         return jsonify(f"Cab booking ID {cab_booking_id} not found. Please provide a valid cab booking ID.")
+    
+    if cab_booking.get('status') == "cab_has_been_cancelled":
+    # Inform the user that the meeting has already been canceled
+    return jsonify(f"Meeting booking ID {meeting_booking_id} has already been canceled.")
+
 
     # Check if the booking date is in the past
     meeting_date = cab_booking.get('meeting_date')
@@ -508,7 +519,8 @@ def cab_cancelling_id(phone_number, cab_booking_id):
 
 
 def extract_dates(sentence):
-    date_pattern = r'\b(?:\d{1,2}(?:st|nd|rd|th)?\s+\w+\s+\d{2,4}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b'
+    # Date pattern for strictly numeric dates (dd/mm/yyyy or dd-mm-yyyy), month between 1-12, year is 2024
+    date_pattern = r'\b(?:\d{1,2}[/-]\d{1,2}[/-]2024)\b'
     matches = re.findall(date_pattern, sentence)
     return matches
 
@@ -516,10 +528,16 @@ def convert_dates(dates):
     converted_dates = []
     for date_str in dates:
         try:
-            # Enforcing day-first interpretation of dates
+            # Parse the date with day-first interpretation (dd-mm-yyyy or dd/mm/yyyy)
             date_obj = parser.parse(date_str, dayfirst=True)
-            converted_dates.append(date_obj.strftime('%d/%m/%Y'))
+
+            # Extract and validate that the month is between 1 and 12, and the year is 2024
+            if 1 <= date_obj.month <= 12 and date_obj.year == 2024:
+                converted_dates.append(date_obj.strftime('%d/%m/%Y'))
+            else:
+                print(f"Invalid date: {date_str} (month out of range or year not 2024)")
         except ValueError:
+            print(f"Skipping invalid date: {date_str}")
             continue
     return converted_dates
 
