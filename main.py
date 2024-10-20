@@ -403,7 +403,7 @@ def meeting_cancelling_id(phone_number, meeting_booking_id):
     
     if meeting_booking.get('status') == "meeting_has_been_cancelled":
     # Inform the user that the meeting has already been canceled
-    return jsonify(f"Meeting booking ID {meeting_booking_id} has already been canceled.")
+        return jsonify(f"Meeting booking ID {meeting_booking_id} has already been canceled.")
 
 
     # Check if the booking date is in the past
@@ -476,7 +476,7 @@ def cab_cancelling_id(phone_number, cab_booking_id):
     
     if cab_booking.get('status') == "cab_has_been_cancelled":
     # Inform the user that the meeting has already been canceled
-    return jsonify(f"Meeting booking ID {meeting_booking_id} has already been canceled.")
+        return jsonify(f"Meeting booking ID {meeting_booking_id} has already been canceled.")
 
 
     # Check if the booking date is in the past
