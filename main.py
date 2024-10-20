@@ -1663,6 +1663,7 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
     user_conflicting_booking = meeting_booking_collection.find_one({
         "phone_number": phone_number,
         "meeting_date": meeting_date,
+        "status": "meeting_has_been_booked",
         "$or": [
             {"starting_time": {"$lt": ending_time, "$gte": starting_time}},  # New meeting starts during an existing meeting
             {"ending_time": {"$gt": starting_time, "$lte": ending_time}},    # New meeting ends during an existing meeting
@@ -1704,6 +1705,7 @@ def check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting
     hall_conflicting_booking = meeting_booking_collection.find_one({
         "hall_name": hall_name,
         "meeting_date": meeting_date,
+        "status": "meeting_has_been_booked",
         "$or": [
             {"starting_time": {"$lt": ending_time, "$gte": starting_time}},  # Hall booked at this time
             {"ending_time": {"$gt": starting_time, "$lte": ending_time}},    # Hall booked at this time
@@ -1750,7 +1752,8 @@ def get_available_time_slotss(phone_number, meeting_date):
     # Find existing bookings for the specified phone number and date
     bookings = meeting_booking_collection.find({
         "phone_number": phone_number,  # Ensure the key matches your MongoDB schema
-        "meeting_date": meeting_date     # Ensure the key matches your MongoDB schema
+        "meeting_date": meeting_date,
+        "status": "meeting_has_been_booked"# Ensure the key matches your MongoDB schema
     }).sort("starting_time", pymongo.ASCENDING)
 
     available_slots = []
@@ -1796,7 +1799,8 @@ def get_available_time_slots(hall_name, meeting_date):
     # Find existing bookings for the specified hall and date
     bookings = meeting_booking_collection.find({
         "hall_name": hall_name,
-        "meeting_date": meeting_date
+        "meeting_date": meeting_date,
+        "status": "meeting_has_been_booked"
     }).sort("starting_time", pymongo.ASCENDING)
 
     available_slots = []
@@ -1832,6 +1836,7 @@ def recommend_available_halls(phone_number, conversation_state):
     # Find halls that are already booked during the given time
     booked_halls = meeting_booking_collection.distinct("hall_name", {
         "meeting_date": meeting_date,
+        "status": "meeting_has_been_booked",
         "starting_time": {"$lt": ending_time},
         "ending_time": {"$gt": starting_time}
     })
