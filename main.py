@@ -256,6 +256,7 @@ def handle_meeting_booking_stats(phone_number, meeting_date):
     # Fetch bookings for the provided phone number within the date range
     meeting_bookings = list(meeting_booking_collection.find({
         "phone_number": phone_number,
+        "status": "meeting_has_been_booked",
         "meeting_date": {
             "$gte": start_date,  # Start date (7 days before)
             "$lte": end_date     # End date (1 day before the provided meeting date)
@@ -275,11 +276,11 @@ def handle_meeting_booking_stats(phone_number, meeting_date):
     # Iterate through the bookings and format the details
     for booking in meeting_bookings:
         booking_info = (
-            f"*Booking ID:* {booking.get('bookings_id', 'N/A')}  "
-            f"*Meeting Date:* {booking.get('meeting_date', 'N/A')}  "
-            f"*Starting Time:* {booking.get('starting_time', 'N/A')}  "
-            f"*Ending Time:* {booking.get('ending_time', 'N/A')}  "
-            f"*Hall Name:* {booking.get('hall_name', 'N/A')}  "
+            f"*Booking ID:* {booking.get('bookings_id', 'N/A')}  \n"
+            f"*Meeting Date:* {booking.get('meeting_date', 'N/A')}  \n"
+            f"*Starting Time:* {booking.get('starting_time', 'N/A')}  \n"
+            f"*Ending Time:* {booking.get('ending_time', 'N/A')}  \n"
+            f"*Hall Name:* {booking.get('hall_name', 'N/A')}  \n"
         )
         booking_list.append(booking_info)
 
@@ -287,13 +288,14 @@ def handle_meeting_booking_stats(phone_number, meeting_date):
     print(f"Final booking list: {booking_list}")
 
     # Join the list of bookings with a visual separator
-    response_message = "------------------------  ".join(booking_list)
+    response_message = "------------------------  \n".join(booking_list)
 
     # Remove the conversation state for the given phone number
     conversation_state_collection.delete_one({"phone_number": phone_number})
 
     # Return the formatted booking details as a response
     return jsonify(response_message)
+
 
 
 
@@ -311,6 +313,7 @@ def handle_cab_booking_stats(phone_number, meeting_date):
     # Fetch cab bookings for the provided phone number within the date range
     cab_bookings = list(cab_booking_collection.find({
         "phone_number": phone_number,
+        "status": "meeting_has_been_cancelled",
         "meeting_date": {
             "$gte": start_date.strftime('%d/%m/%Y'),  # Start date (7 days before)
             "$lte": end_date.strftime('%d/%m/%Y')     # End date (1 day before the provided meeting date)
@@ -416,7 +419,7 @@ def meeting_cancelling_id(phone_number, meeting_booking_id):
         # Remove the 'bookings_id' attribute from the meeting_booking document
         meeting_booking_collection.update_one(
             {"bookings_id": meeting_booking_id},
-            {"$unset": {"booking_id": ""}}
+            {"$set": {"status": "meeting_has_been_cancelled"}}
         )
 
         # After successfully cancelling the booking, check if any state is tied to this phone number
@@ -481,10 +484,10 @@ def cab_cancelling_id(phone_number, cab_booking_id):
 
     # If the cab ride is not over, proceed with the cancellation
     if 'booking_id' in cab_booking and cab_booking['booking_id']:
-        # Remove the 'booking_id' attribute from the cab_booking document
+        # cahnaing the status the 'booking_id' attribute from the cab_booking document
         cab_booking_collection.update_one(
             {"booking_id": cab_booking_id},
-            {"$unset": {"booking_id": ""}}
+            {"$set": {"status": "cab_has_been_cancelled"}}
         )
 
         # After successfully cancelling the booking, check if any state is tied to this phone number
@@ -520,64 +523,6 @@ def convert_dates(dates):
             continue
     return converted_dates
 
-def ask_for_cab_name(phone_number, intent_data=None):
-    # Update the conversation state to "asking_cab_name"
-    update_data = {"state": "asking_cab_name"}
-    if intent_data:
-        update_data.update(intent_data)
-
-    conversation_state_collection.update_one(
-        {"phone_number": phone_number},
-        {"$set": update_data},
-        upsert=True
-    )
-
-    # Available cabs and their routes
-    available_cabs = {
-        'Cab1': 'Chainsys Company, Elcot Main Gate, Madurai Kamaraj College',
-        'Cab2': 'Chainsys Company, Elcot Main Gate, Madurai Kamaraj College, Nagamalai Puthukottai, Achampathu, Kalavasal'
-    }
-
-    # Create a list of messages where each cab and its route are displayed on separate lines
-    response_message = [
-        "Please choose from the available cabs:",
-        "Cab1: Chainsys Company, Elcot Main Gate, Madurai Kamaraj College",
-        "Cab2: Chainsys Company, Elcot Main Gate, Madurai Kamaraj College, Nagamalai Puthukottai, Achampathu, Kalavasal",
-        "Enter the cab name."
-    ]
-
-    # Return the message in list format
-    return jsonify({
-         response_message
-    })
-
-def ask_for_batch_name(phone_number, intent_data=None):
-    # Update the conversation state to "asking_batch_name"
-    update_data = {"state": "asking_batch_name"}
-    if intent_data:
-        update_data.update(intent_data)
-
-    conversation_state_collection.update_one(
-        {"phone_number": phone_number},
-        {"$set": update_data},
-        upsert=True
-    )
-
-    # Available batches and their times
-    available_batches = {
-        'Batch1': '7:00 PM to 7:30 PM',
-        'Batch2': '7:30 PM to 8:30 PM'
-    }
-
-    # Create a list of messages where each batch and its time are displayed on separate lines
-    response_message = [
-        "Please choose from the available batches:",
-        *[f"{batch}: {time}" for batch, time in available_batches.items()],
-        "Enter the batch name."
-    ]
-
-    # Return the message in list format
-    return jsonify(response_message)
 
 
 
@@ -673,8 +618,6 @@ def generate_unique_ids(existing_ids):
         if unique_id not in existing_ids:
             return unique_id
 
-from datetime import datetime, time
-from flask import jsonify
 
 
 
@@ -685,7 +628,8 @@ def handle_cab_selection(phone_number, starting_time, meeting_date):
         # Check if there's already a cab booking for the same meeting date and phone number
         existing_booking = cab_booking_collection.find_one({
             "phone_number": phone_number,
-            "meeting_date": meeting_date
+            "meeting_date": meeting_date,
+            "status":"cab_has_been_booked"
         })
 
         if existing_booking:
@@ -1072,6 +1016,7 @@ def continue_conversation(text, phone_number, conversation_state):
                 "starting_time": conversation_state.get('starting_time'),
                 "meeting_date": conversation_state.get('meeting_date'),
                 "dropping_point": conversation_state.get('dropping_point'),
+                "status":"cab_has_been_booked"
             })
     
             # Remove conversation state
@@ -1147,7 +1092,7 @@ def continue_conversation(text, phone_number, conversation_state):
                 "starting_time": conversation_state.get('starting_time'),
                 "meeting_date": conversation_state.get('meeting_date'),
                 "dropping_point": conversation_state.get('dropping_point'),
-                "status":"cab_has_been_booked_successfully"
+                "status":"cab_has_been_booked"
             })
         
             # Clear the conversation state after booking
