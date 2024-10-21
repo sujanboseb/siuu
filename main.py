@@ -659,10 +659,10 @@ def handle_cab_selection(phone_number, starting_time, meeting_date):
 
             # Inform the user that they already have a booking
             message = (f"You already have a cab booked on {meeting_date} "
-                       f"with Booking ID: **{booking_id}**, drop-off point: **{drop_off_point}**. time:**{starting_times} "
-                       "Please enter the one of the following option number or its value or its highlighted word:"
-                       "**1)**  **Re-enter** the details starting from the meeting date"
-                       "**2)**  **Exit**")
+                       f"with Booking ID: *{booking_id}*, drop-off point: **{drop_off_point}**. time:**{starting_times} "
+                       "Please enter the one of the following option number or its value or its highlighted word:\n"
+                       "*1)*  *Re-enter* the details starting from the meeting date \n"
+                       "*2)*  *Exit* \n")
 
             # Update the state to asking for cab options
             conversation_state_collection.update_one(
