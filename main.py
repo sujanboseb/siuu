@@ -520,7 +520,7 @@ def cab_cancelling_id(phone_number, cab_booking_id):
 
 def extract_dates(sentence):
     # Date pattern for strictly numeric dates (dd/mm/yyyy or dd-mm-yyyy), month between 1-12, year is 2024
-    date_pattern = r'\b(?:\d{1,2}[/-]\d{1,2}[/-]2024)\b'
+    date_pattern = r'\b\d{1,2}/\d{1,2}/2024\b'
     matches = re.findall(date_pattern, sentence)
     return matches
 
