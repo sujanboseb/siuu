@@ -1360,35 +1360,35 @@ def continue_conversation(text, phone_number, conversation_state):
       if user_input in ["1", "start over", "start over by entering the hall name again"]:
           # Remove everything except phone number and intent from conversation state
           if not conversation_state:
-              conversation_state_collection.update_one(
-                  {"phone_number": phone_number},
-                  {"$set": {
-                      "intent": "meeting_booking",
-                      "state": "asking_hall_name"
-                      }},
-                      upsert=True
-              )
-              return jsonify("Starting a new booking process. Please provide the hall name. "
-                        "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
-        
-           else:
+            # No existing session, so create a new one with intent and state
+            conversation_state_collection.update_one(
+                {"phone_number": phone_number},
+                {"$set": {
+                    "intent": "meeting_booking",
+                    "state": "asking_hall_name"  # Set state to ask for hall name
+                }},
+                upsert=True
+            )
+            return jsonify("Starting a new booking process. Please provide the hall name. "
+                           "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
+            else:
+                # Session exists, so clear previous data and set to ask for hall name
                 conversation_state_collection.update_one(
-                      {"phone_number": phone_number},
-                      {"$unset": {  # Remove everything except the phone number and intent
-                          "hall_name": "",
-                          "meeting_date": "",
-                          "starting_time": "",
-                          "ending_time": "",
-                          "other_fields": ""  # Add any other fields that need to be cleared
-                      },
-                      "$set": {
-                          "state": "asking_hall_name"  # Set state to ask for hall name again
-                      }}
-                  )
-        
-                  # Inform the user that they can start over by entering the hall name
-                return jsonify("Starting over. Please provide the hall name"
-                  "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
+                    {"phone_number": phone_number},
+                    {"$unset": {  # Remove all fields except phone number and intent
+                        "hall_name": "",
+                        "meeting_date": "",
+                        "starting_time": "",
+                        "ending_time": "",
+                        "other_fields": ""  # Clear any additional fields as needed
+                    },
+                    "$set": {
+                        "state": "asking_hall_name"  # Set state to ask for hall name again
+                    }}
+                )
+                return jsonify("Starting over. Please provide the hall name. "
+                               "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
+              
 
       elif user_input in ["2", "exit"]:
           if not conversation_state:
