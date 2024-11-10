@@ -1359,7 +1359,7 @@ def continue_conversation(text, phone_number, conversation_state):
 
       if user_input in ["1", "start over", "start over by entering the hall name again"]:
           # Remove everything except phone number and intent from conversation state
-          if not in conversation_state:
+          if not conversation_state:
               conversation_state_collection.update_one(
                   {"phone_number": phone_number},
                   {"$set": {
