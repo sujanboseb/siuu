@@ -1373,21 +1373,21 @@ def continue_conversation(text, phone_number, conversation_state):
                            "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
            else:
             # Session exists, so clear previous data and set to ask for hall name
-            conversation_state_collection.update_one(
-                {"phone_number": phone_number},
-                {"$unset": {  # Remove all fields except phone number and intent
-                    "hall_name": "",
-                    "meeting_date": "",
-                    "starting_time": "",
-                    "ending_time": "",
-                    "other_fields": ""  # Clear any additional fields as needed
-                },
-                "$set": {
-                    "state": "asking_hall_name"  # Set state to ask for hall name again
-                }}
-            )
-            return jsonify("Starting over. Please provide the hall name. "
-                           "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
+                conversation_state_collection.update_one(
+                    {"phone_number": phone_number},
+                    {"$unset": {  # Remove all fields except phone number and intent
+                        "hall_name": "",
+                        "meeting_date": "",
+                        "starting_time": "",
+                        "ending_time": "",
+                        "other_fields": ""  # Clear any additional fields as needed
+                    },
+                    "$set": {
+                        "state": "asking_hall_name"  # Set state to ask for hall name again
+                    }}
+                )
+                return jsonify("Starting over. Please provide the hall name. "
+                               "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
               
 
       elif user_input in ["2", "exit"]:
