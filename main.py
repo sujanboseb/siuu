@@ -1388,7 +1388,7 @@ def continue_conversation(text, phone_number, conversation_state):
                             "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
 
     # If user chose to exit (input "2")
-        elif user_input in ["2", "exit"]:
+       elif user_input in ["2", "exit"]:
             if not conversation_state:
                 # No active session found
                 return jsonify("No active session found to exit. Please start a new session if needed.")
