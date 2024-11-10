@@ -659,7 +659,7 @@ def handle_cab_selection(phone_number, starting_time, meeting_date):
 
             # Inform the user that they already have a booking
             message = (f"You already have a cab booked on {meeting_date} "
-                       f"with Booking ID: *{booking_id}*, drop-off point: **{drop_off_point}**. time:**{starting_times} "
+                       f"with Booking ID: *{booking_id}*, drop-off point: *{drop_off_point}*. time:{starting_times} "
                        "Please enter the one of the following option number or its value or its highlighted word:\n"
                        "*1)*  *Re-enter* the details starting from the meeting date \n"
                        "*2)*  *Exit* \n")
@@ -675,8 +675,8 @@ def handle_cab_selection(phone_number, starting_time, meeting_date):
 
         # If no existing booking, proceed with asking for drop-off point
         points = ["Elcot Main Gate", "Madurai Kamaraj College", "Nagamalai Puthukottai", "Achampathu", "Kalavasal"]
-        bold_points = [f"**{point}**" for point in points]
-        point_message = "Please enter your **drop-off point** from the following: " + ", ".join(bold_points)
+        bold_points = [f"*{point}*" for point in points]
+        point_message = "Please enter your *drop-off point* from the following: " + ", ".join(bold_points)
 
         # Update conversation state to ask for drop-off point
         conversation_state_collection.update_one(
