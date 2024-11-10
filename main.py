@@ -1355,32 +1355,50 @@ def continue_conversation(text, phone_number, conversation_state):
       user_input = text.strip().lower()  # Normalize user input for case-insensitive matching
 
       # Check if the user chose to start over or exit
+      conversation_state = conversation_state_collection.find_one({"phone_number": phone_number})
+
       if user_input in ["1", "start over", "start over by entering the hall name again"]:
           # Remove everything except phone number and intent from conversation state
-          conversation_state_collection.update_one(
-              {"phone_number": phone_number},
-              {"$unset": {  # Remove everything except the phone number and intent
-                  "hall_name": "",
-                  "meeting_date": "",
-                  "starting_time": "",
-                  "ending_time": "",
-                  "other_fields": ""  # Add any other fields that need to be cleared
-              },
-              "$set": {
-                  "state": "asking_hall_name"  # Set state to ask for hall name again
-              }}
-          )
-
-          # Inform the user that they can start over by entering the hall name
-          return jsonify("Starting over. Please provide the hall name"
-          "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
+          if not in conversation_state:
+              conversation_state_collection.update_one(
+                  {"phone_number": phone_number},
+                  {"$set": {
+                      "intent": "meeting_booking",
+                      "state": "asking_hall_name"
+                      }},
+                      upsert=True
+              )
+              return jsonify("Starting a new booking process. Please provide the hall name. "
+                           "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
+        
+           else:
+                  conversation_state_collection.update_one(
+                      {"phone_number": phone_number},
+                      {"$unset": {  # Remove everything except the phone number and intent
+                          "hall_name": "",
+                          "meeting_date": "",
+                          "starting_time": "",
+                          "ending_time": "",
+                          "other_fields": ""  # Add any other fields that need to be cleared
+                      },
+                      "$set": {
+                          "state": "asking_hall_name"  # Set state to ask for hall name again
+                      }}
+                  )
+        
+                  # Inform the user that they can start over by entering the hall name
+                  return jsonify("Starting over. Please provide the hall name"
+                  "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
 
       elif user_input in ["2", "exit"]:
+          if not conversation_state:
+              return jsonify("No active session found to exit. Please start a new session if needed.")
           # Remove the entire conversation state as the user opted to exit
-          conversation_state_collection.delete_one({"phone_number": phone_number})
+          else:
+              conversation_state_collection.delete_one({"phone_number": phone_number})
 
-          # Inform the user that the old conversation state has been removed
-          return jsonify("You have exited the process. The previous conversation state has been removed.")
+              # Inform the user that the old conversation state has been removed
+              return jsonify("You have exited the process. The previous conversation state has been removed.")
 
       else:
           # Handle invalid input (user didn't enter 1, 2, or valid option)
