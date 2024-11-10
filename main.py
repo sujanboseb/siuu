@@ -1327,9 +1327,6 @@ def continue_conversation(text, phone_number, conversation_state):
     if state == 'asking_cab_validation':
       user_input = text.strip().lower()
       print("user_input:",user_input)
-        
-    
-
       # Check the user input for both 1 and variations of "Re-enter the details starting from the meeting date"
       if user_input == '1' or 're-enter the details starting from the meeting date'  or 'reenter' or 'Re-enter'in user_input.lower():
         # Remove everything from the conversation state except intent and phone number
