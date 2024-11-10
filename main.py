@@ -1346,11 +1346,11 @@ def continue_conversation(text, phone_number, conversation_state):
         return jsonify("Please provide the meeting date in **dd/mm/yyyy** format.")
 
     # If user chose to exit
-       elif user_input == '2' or 'exit' or 'Exit' in user_input.lower():
+      elif user_input == '2' or 'exit' or 'Exit' in user_input.lower():
         # Remove everything from the conversation state
-        conversation_state_collection.delete_one({"phone_number": phone_number})
+          conversation_state_collection.delete_one({"phone_number": phone_number})
         # Send a farewell message
-        return jsonify("Thank you for using our cab booking service. Your session has been closed.")
+          return jsonify("Thank you for using our cab booking service. Your session has been closed.")
 
     elif state == 'asking_meeting_first_options':
       user_input = text.strip().lower()  # Normalize user input for case-insensitive matching
