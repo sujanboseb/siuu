@@ -1328,29 +1328,28 @@ def continue_conversation(text, phone_number, conversation_state):
       user_input = text.strip().lower()
       print("user_input:",user_input)
       # Check the user input for both 1 and variations of "Re-enter the details starting from the meeting date"
-      if user_input == '1' or 're-enter the details starting from the meeting date'  or 'reenter' or 'Re-enter'in user_input.lower():
-        # Remove everything from the conversation state except intent and phone number
+      if user_input == '1' or 're-enter the details starting from the meeting date' in user_input or 'reenter' in user_input or 're-enter' in user_input:
         conversation_state_collection.update_one(
-            {"phone_number": phone_number},
-            {"$set": {
-                "state": "asking_meeting_date",  # Set state to ask for meeting date
-                "intent": "cab_booking"  # Retain the intent
-            }, "$unset": {
-                "meeting_date": "",
-                "starting_time": "",
-            }},
-            upsert=True
+        {"phone_number": phone_number},
+        {"$set": {
+            "state": "asking_meeting_date",  # Set state to ask for meeting date
+            "intent": "cab_booking"  # Retain the intent
+        }, "$unset": {
+            "meeting_date": "",
+            "starting_time": "",
+        }},
+        upsert=True
         )
 
-        # Ask for the meeting date again
+    # Ask for the meeting date again
         return jsonify("Please provide the meeting date in **dd/mm/yyyy** format.")
-
-    # If user chose to exit
-      elif user_input == '2' or 'exit' or 'Exit' in user_input.lower():
-        # Remove everything from the conversation state
-          conversation_state_collection.delete_one({"phone_number": phone_number})
-        # Send a farewell message
-          return jsonify("Thank you for using our cab booking service. Your session has been closed.")
+    elif user_input == '2' or 'exit' in user_input or 'Exit' in user_input:
+    # Remove everything from the conversation state
+        conversation_state_collection.delete_one({"phone_number": phone_number})
+    # Send a farewell message
+        return jsonify("Thank you for using our cab booking service. Your session has been closed.")
+        
+    
 
     elif state == 'asking_meeting_first_options':
       user_input = text.strip().lower()  # Normalize user input for case-insensitive matching
