@@ -1385,8 +1385,8 @@ def continue_conversation(text, phone_number, conversation_state):
                     "$set": {
                         "state": "asking_hall_name"  # Set state to ask for hall name again
                     }}
-                )
-                return jsonify("Starting over. Please provide the hall name. "
+                  )
+                 return jsonify("Starting over. Please provide the hall name. "
                                "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
               
 
