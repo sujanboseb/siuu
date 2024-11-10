@@ -1371,7 +1371,7 @@ def continue_conversation(text, phone_number, conversation_state):
             )
             return jsonify("Starting a new booking process. Please provide the hall name. "
                            "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
-            else:
+           else:
                 # Session exists, so clear previous data and set to ask for hall name
                 conversation_state_collection.update_one(
                     {"phone_number": phone_number},
