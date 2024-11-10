@@ -1343,10 +1343,10 @@ def continue_conversation(text, phone_number, conversation_state):
 
     # Ask for the meeting date again
         return jsonify("Please provide the meeting date in **dd/mm/yyyy** format.")
-    elif user_input == '2' or 'exit' in user_input or 'Exit' in user_input:
-    # Remove everything from the conversation state
+      elif user_input == '2' or 'exit' in user_input or 'Exit' in user_input:
+        # Remove everything from the conversation state
         conversation_state_collection.delete_one({"phone_number": phone_number})
-    # Send a farewell message
+        # Send a farewell message
         return jsonify("Thank you for using our cab booking service. Your session has been closed.")
         
     
