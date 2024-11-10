@@ -1369,10 +1369,10 @@ def continue_conversation(text, phone_number, conversation_state):
                       upsert=True
               )
               return jsonify("Starting a new booking process. Please provide the hall name. "
-                           "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
+                        "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
         
            else:
-                  conversation_state_collection.update_one(
+                conversation_state_collection.update_one(
                       {"phone_number": phone_number},
                       {"$unset": {  # Remove everything except the phone number and intent
                           "hall_name": "",
@@ -1387,7 +1387,7 @@ def continue_conversation(text, phone_number, conversation_state):
                   )
         
                   # Inform the user that they can start over by entering the hall name
-                  return jsonify("Starting over. Please provide the hall name"
+                return jsonify("Starting over. Please provide the hall name"
                   "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
 
       elif user_input in ["2", "exit"]:
