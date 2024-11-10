@@ -1325,7 +1325,10 @@ def continue_conversation(text, phone_number, conversation_state):
 
 
     if state == 'asking_cab_validation':
-      user_input = text.strip().lower()  # Normalize user input for case-insensitive matching
+      user_input = text.strip().lower()
+      printf("user_input:" user_input)
+        
+    
 
       # Check the user input for both 1 and variations of "Re-enter the details starting from the meeting date"
       if user_input == '1' or 're-enter the details starting from the meeting date'  or 'reenter' or 'Re-enter'in user_input.lower():
