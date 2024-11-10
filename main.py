@@ -1352,11 +1352,13 @@ def continue_conversation(text, phone_number, conversation_state):
     
 
     elif state == 'asking_meeting_first_options':
-      user_input = text.strip().lower()  # Normalize user input for case-insensitive matching
+        user_input = text.strip().lower()  # Normalize user input for case-insensitive matching
 
-      # Check if the user chose to start over or exit
-      conversation_state = conversation_state_collection.find_one({"phone_number": phone_number})
-      if user_input in ["1", "start over", "start over by entering the hall name again"]:
+        # Check if conversation state exists for the phone number
+        conversation_state = conversation_state_collection.find_one({"phone_number": phone_number})
+
+        # If user chose to start over (input "1")
+        if user_input in ["1", "start over", "start over by entering the hall name again"]:
             if not conversation_state:
                 # No existing session, so create a new one with intent and state
                 conversation_state_collection.update_one(
@@ -1387,7 +1389,7 @@ def continue_conversation(text, phone_number, conversation_state):
                 return jsonify("Starting over. Please provide the hall name. "
                             "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
 
-    # If user chose to exit (input "2")
+        # If user chose to exit (input "2")
         elif user_input in ["2", "exit"]:
             if not conversation_state:
                 # No active session found
@@ -1397,10 +1399,9 @@ def continue_conversation(text, phone_number, conversation_state):
                 conversation_state_collection.delete_one({"phone_number": phone_number})
                 return jsonify("You have exited the process. The previous conversation state has been removed.")
 
-
-      else:
-          # Handle invalid input (user didn't enter 1, 2, or valid option)
-          return jsonify("Invalid option. Please enter '1' to start over or '2' to exit.")
+        # Handle invalid input (if user didn't enter "1" or "2")
+        else:
+            return jsonify("Invalid option. Please enter '1' to start over or '2' to exit.")
 
     elif state == 'asking_ending_time':
         print(f"Received ending time: {text}")
