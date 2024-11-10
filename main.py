@@ -1326,7 +1326,7 @@ def continue_conversation(text, phone_number, conversation_state):
 
     if state == 'asking_cab_validation':
       user_input = text.strip().lower()
-      print("user_input:" user_input)
+      print("user_input:",user_input)
         
     
 
