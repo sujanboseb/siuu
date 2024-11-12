@@ -612,25 +612,28 @@ def ask_for_entity(phone_number, entity, intent, intent_data=None):
         upsert=True
     )
 
-    # Conditional checks for specific intents and entities
-    if intent == "cab_booking" and entity == "starting_time":
-        # Special message for cab booking starting time
-        return jsonify("Please provide the cab booking time. The time must be either 6:30pm or 7:30pm.")
-    
-    elif intent == "cab_booking" and entity == "meeting_date":
-        # Special message for cab booking date
-        return jsonify("Please provide the cab booking date in **dd/mm/yyyy** format.")
+    # Check specific intent-entity combinations first
+    if intent == "cab_booking":
+        if entity == "starting_time":
+            # Special message for cab booking starting time
+            return jsonify("Please provide the cab booking time. The time must be either 6:30pm or 7:30pm.")
+        
+        elif entity == "meeting_date":
+            # Special message for cab booking date
+            return jsonify("Please provide the cab booking date in **dd/mm/yyyy** format.")
 
-    elif entity == "meeting_date":
-        # Special message for meeting date format
+    # If no specific intent-entity combination is matched, fall back to general cases
+    if entity == "meeting_date":
+        # General message for meeting date format
         return jsonify("Please provide the meeting date in **dd/mm/yyyy** format.")
 
     elif entity in ["starting_time", "ending_time"]:
-        # Special message for time format (e.g., 3pm/2:15pm)
-        return jsonify(f"Please provide the {entity.replace('_', ' ')} in **3pm/2:15pm** format.")
+        # General message for time format (e.g., 3pm/2:15pm)
+        return jsonify(f"Please provide the {entity.replace('_', ' ')} in **hh:mm am/pm** format.")
 
     # Default message for other entities
     return jsonify(f"Please provide the {entity.replace('_', ' ')}.")
+
 
 
 
