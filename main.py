@@ -1322,36 +1322,36 @@ def continue_conversation(text, phone_number, conversation_state):
             )
 
             # Debugging before calling complete_cab_booking
-            print(f"[DEBUG] Starting cab booking process.")
-            print(f"Phone number: {phone_number}")
-            print(f"Meeting date: {meeting_date}")
-            print(f"cab time (24-hour format): {cab_booking_time_24h}")
+        print(f"[DEBUG] Starting cab booking process.")
+        print(f"Phone number: {phone_number}")
+        print(f"Meeting date: {meeting_date}")
+        print(f"cab time (24-hour format): {cab_booking_time_24h}")
 
-            meeting_date=meeting_date_str
-            print(f"Meeting date correted form: {meeting_date}")
+        meeting_date=meeting_date_str
+        print(f"Meeting date correted form: {meeting_date}")
 
             # Proceed to complete the cab booking
-            cab_booking_time = cab_booking_time_24h  # Pass the 24-hour format time
-            valid_times = ["18:30", "19:30"]
+        cab_booking_time = cab_booking_time_24h  # Pass the 24-hour format time
+        valid_times = ["18:30", "19:30"]
 
             # Check if the entered time is valid
-            if cab_booking_time not in valid_times:
+        if cab_booking_time not in valid_times:
                 # Raise error message if the time is not 18:30 or 19:30
-                error_message = "Cabs are not available at the selected time. Please enter a valid time: 6:30AM or 7:3oPM."
-                print(error_message)
+            error_message = "Cabs are not available at the selected time. Please enter a valid time: 6:30AM or 7:3oPM."
+            print(error_message)
 
                 # Remove the 'starting_time' from the conversation state
-                conversation_state_collection.update_one(
-                    {"phone_number": phone_number},
-                    {"$unset": {"starting_time": ""}, "$set": {"state": "asking_cab_booking_time"}},
-                    upsert=True
-                )
+        conversation_state_collection.update_one(
+            {"phone_number": phone_number},
+            {"$unset": {"cab_booking_time": ""}, "$set": {"state": "asking_cab_booking_time"}},
+            upsert=True
+            )
 
-                return jsonify(error_message)
+        return jsonify(error_message)
 
             # Proceed to handle cab selection after valid time check
-            print(f"Proceeding to complete cab booking with starting time: {cab_booking_time}")
-            return handle_cab_selection(phone_number, cab_booking_time, meeting_date)
+        print(f"Proceeding to complete cab booking with starting time: {cab_booking_time}")
+        return handle_cab_selection(phone_number, cab_booking_time, meeting_date)
 
         
         
