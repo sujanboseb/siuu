@@ -168,11 +168,11 @@ def handle_message():
                 if not hall_name:
                     return ask_for_hall_name(phone_number, intent_data)
                 elif not meeting_date:
-                    return ask_for_entity(phone_number, 'meeting_date', intent_data)
+                    return ask_for_entity(phone_number, 'meeting_date', intent)
                 elif not starting_time:
-                    return ask_for_entity(phone_number, 'starting_time', intent_data)
+                    return ask_for_entity(phone_number, 'starting_time', intent)
                 elif not ending_time:
-                    return ask_for_entity(phone_number, 'ending_time', intent_data)
+                    return ask_for_entity(phone_number, 'ending_time', intent)
                 else:
                     # If all entities are present, check for conflicts and complete the booking
                     return check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting_time, ending_time)
@@ -182,7 +182,7 @@ def handle_message():
                 meeting_booking_id = intent_data.get('meeting_booking_id')
 
                 if not meeting_booking_id:
-                    return ask_for_entity(phone_number, 'meeting_booking_id', intent_data)
+                    return ask_for_entity(phone_number, 'meeting_booking_id', intent)
                 else:
                     # Proceed to ask for meeting_id if not already provided
                     return meeting_cancelling_id(phone_number, meeting_booking_id)
@@ -202,7 +202,7 @@ def handle_message():
                 cab_booking_id = intent_data.get('cab_booking_id')
 
                 if not cab_booking_id:
-                    return ask_for_entity(phone_number, 'cab_booking_id', intent_data)
+                    return ask_for_entity(phone_number, 'cab_booking_id', intent)
                 else:
                     # Proceed to ask for meeting_id if not already provided
                     return cab_cancelling_id(phone_number, cab_booking_id)
@@ -212,7 +212,7 @@ def handle_message():
                 print("Fetching bookings for phone number:", phone_number)
                 meeting_date = intent_data.get('meeting_date')
                 if not meeting_date:
-                    return ask_for_entity(phone_number, 'meeting_date', intent_data)
+                    return ask_for_entity(phone_number, 'meeting_date', intent)
 
                 return handle_meeting_booking_stats(phone_number,meeting_date)
 
@@ -222,7 +222,7 @@ def handle_message():
                 print("Fetching bookings for phone number:", phone_number)
                 meeting_date = intent_data.get('meeting_date')
                 if not meeting_date:
-                    return ask_for_entity(phone_number, 'meeting_date', intent_data)
+                    return ask_for_entity(phone_number, 'meeting_date', intent)
                 return handle_cab_booking_stats(phone_number,meeting_date)
 
 
@@ -232,9 +232,9 @@ def handle_message():
 
               # Ask for missing entities in sequence
               if not meeting_date:
-                  return ask_for_entity(phone_number, 'meeting_date', intent_data)
+                  return ask_for_entity(phone_number, 'meeting_date', intent)
               elif not starting_time:
-                  return ask_for_entity(phone_number, 'starting_time', intent_data)
+                  return ask_for_entity(phone_number, 'starting_time', intent)
                   # If all entities are present, proceed with booking
               return handle_cab_selection(phone_number, starting_time, meeting_date)
 
@@ -597,7 +597,7 @@ def convert_to_24_hour_format(time_str):
             return None  # Return None if the time is invalid
 
 
-def ask_for_entity(phone_number, entity, intent_data=None):
+def ask_for_entity(phone_number, entity, intent):
     # Initialize the update data for state tracking
     update_data = {"state": f"asking_{entity}"}
 
