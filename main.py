@@ -597,7 +597,7 @@ def convert_to_24_hour_format(time_str):
             return None  # Return None if the time is invalid
 
 
-def ask_for_entity(phone_number, entity, intent):
+def ask_for_entity(phone_number, entity, intent, intent_data=None):
     # Initialize the update data for state tracking
     update_data = {"state": f"asking_{entity}"}
 
@@ -612,8 +612,16 @@ def ask_for_entity(phone_number, entity, intent):
         upsert=True
     )
 
-    # Conditional checks for specific entities
-    if entity == "meeting_date":
+    # Conditional checks for specific intents and entities
+    if intent == "cab_booking" and entity == "starting_time":
+        # Special message for cab booking starting time
+        return jsonify("Please provide the cab booking time. The time must be either 6:30pm or 7:30pm.")
+    
+    elif intent == "cab_booking" and entity == "meeting_date":
+        # Special message for cab booking date
+        return jsonify("Please provide the cab booking date in **dd/mm/yyyy** format.")
+
+    elif entity == "meeting_date":
         # Special message for meeting date format
         return jsonify("Please provide the meeting date in **dd/mm/yyyy** format.")
 
@@ -623,6 +631,7 @@ def ask_for_entity(phone_number, entity, intent):
 
     # Default message for other entities
     return jsonify(f"Please provide the {entity.replace('_', ' ')}.")
+
 
 
 def generate_unique_id(existing_ids):
