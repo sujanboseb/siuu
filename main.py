@@ -632,6 +632,17 @@ def ask_for_entity(phone_number, entity, intent, intent_data=None):
             # Ask for meeting ending time in the specific format
             return jsonify("Please provide the meeting ending time in **h:mmam/pm (e.g., 3:00pm/4:15pm)** format.")
 
+    # Check for list meetings and list cabs intents
+    elif intent == "list_meetings_booked":
+        if entity == "meeting_date":
+            # Ask for the date to list previous meetings from
+            return jsonify("Please provide the meeting date from which you want to view past bookings in *dd/mm/yyyy* format.")
+
+    elif intent == "list_cabs_booked":
+        if entity == "meeting_date":
+            # Ask for the date to list previous cabs from
+            return jsonify("Please provide the cab booking date from which you want to view past bookings in *dd/mm/yyyy* format.")
+
     # If no specific intent-entity match, fall back to general cases
     if entity == "meeting_date":
         # General message for meeting date format
@@ -639,6 +650,7 @@ def ask_for_entity(phone_number, entity, intent, intent_data=None):
 
     # Default message for other entities
     return jsonify(f"Please provide the {entity.replace('_', ' ')}.")
+
 
 
 
