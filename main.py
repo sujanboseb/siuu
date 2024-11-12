@@ -1567,7 +1567,7 @@ def continue_conversation(text, phone_number, conversation_state):
 
         # Fetch available time slots for the selected hall and new date
         available_time_slots = get_available_time_slots(conversation_state.get('hall_name'), new_meeting_date)
-        return jsonify( f"The hall is available at the following times: {available_time_slots}. Please provide the new starting time in **h:mm am/pm(3:00pm/ 4:15pm)** format.")
+        return jsonify( f"The hall is available at the following times: {available_time_slots}. Please provide the new starting time in **h:mmam/pm(3:00pm/ 4:15pm)** format.")
 
     elif state == 'asking_new_starting_time':
     # Validate new starting time
@@ -1613,7 +1613,7 @@ def continue_conversation(text, phone_number, conversation_state):
               "state": "asking_new_ending_time"
           }}
       )
-      return jsonify( "Please provide the new ending time.")
+      return jsonify( "Please provide the new ending time. in *hh:mmam/pm* format")
 
 
 
