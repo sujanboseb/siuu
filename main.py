@@ -1153,7 +1153,9 @@ def continue_conversation(text, phone_number, conversation_state):
 
       meeting_date = converted_dates[0]
       validation_error = validate_meeting_date(meeting_date)
-      current_date = datetime.now().date()
+      tz = pytz.timezone('Asia/Kolkata')
+      current_time = datetime.now(tz).time()
+      current_date = datetime.now(tz).date()
       print("Going into the meeting date validation logic.")
       meeting_date_obj = datetime.strptime(meeting_date, '%d/%m/%Y').date()
       meeting_year = meeting_date_obj.year
@@ -1188,7 +1190,7 @@ def continue_conversation(text, phone_number, conversation_state):
                   {"$set": {"meeting_date": meeting_date, "state": "asking_starting_time"}}
               )
               print("Updated state to 'asking_starting_time'")
-              return jsonify("Please provide the starting time in **h:mm am/pm(3:00pm/ 4:15pm)** format.")
+              return jsonify("Please provide the starting time in **h:mmam/pm(3:00pm/ 4:15pm)** format.")
 
           elif not ending_time:
               conversation_state_collection.update_one(
@@ -1196,7 +1198,7 @@ def continue_conversation(text, phone_number, conversation_state):
                   {"$set": {"meeting_date": meeting_date, "state": "asking_ending_time"}}
               )
               print("Updated state to 'asking_ending_time'")
-              return jsonify( "Please provide the ending time in **h:mm am/pm(3:00pm/ 4:15pm)** format.")
+              return jsonify( "Please provide the ending time in **h:mmam/pm(3:00pm/ 4:15pm)** format.")
 
           else:
               return check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting_time, ending_time)
@@ -1248,7 +1250,7 @@ def continue_conversation(text, phone_number, conversation_state):
         # Convert the starting time to 24-hour format
         starting_time_24h = convert_to_24_hour_format(starting_time)
         if not starting_time_24h:
-            return jsonify("Invalid time format. Please provide a valid time in 'HH:MM AM/PM' format.")
+            return jsonify("Invalid time format. Please provide a valid time in 'HH:MMam/pm' format. eg(3:10pm) like that ")
 
         print(f"Received starting time in 24-hour format: {starting_time_24h}")
 
@@ -1261,11 +1263,12 @@ def continue_conversation(text, phone_number, conversation_state):
         meeting_date = datetime.strptime(meeting_date_str, '%d/%m/%Y').date()
 
         # Check if the meeting date is today
-        current_date = datetime.now().date()
+        tz = pytz.timezone('Asia/Kolkata')
+        current_time = datetime.now(tz).time()
+        current_date = datetime.now(tz).date()
 
         if meeting_date == current_date:
             # If the meeting is today, get the current time
-            current_time = datetime.now().time()
             starting_time_obj = datetime.strptime(starting_time_24h, "%H:%M").time()
 
             # Debugging logs
@@ -1292,7 +1295,7 @@ def continue_conversation(text, phone_number, conversation_state):
                 }}
             )
             print("Updated state to 'asking_ending_time'")
-            return jsonify("Please provide the ending time in **h:mm am/pm(3:00pm/ 4:15pm)** format.")
+            return jsonify("Please provide the ending time in **h:mmam/pm like  this one(3:00pm/ 4:15pm)** format.")
 
         elif intent == 'cab_booking':
             # Save the validated starting time in conversation state
@@ -1317,7 +1320,7 @@ def continue_conversation(text, phone_number, conversation_state):
             # Check if the entered time is valid
             if starting_time not in valid_times:
                 # Raise error message if the time is not 18:30 or 19:30
-                error_message = "Cabs are not available at the selected time. Please enter a valid time: 6:30pm or 7:30."
+                error_message = "Cabs are not available at the selected time. Please enter a valid time: 6:30pm or 7:30pm."
                 print(error_message)
 
                 # Remove the 'starting_time' from the conversation state
@@ -1359,12 +1362,18 @@ def continue_conversation(text, phone_number, conversation_state):
         )
 
     # Ask for the meeting date again
-        return jsonify("Please provide the meeting date in **dd/mm/yyyy** format.")
+        return jsonify("Please provide the cab booking date in **dd/mm/yyyy** format.")
       elif user_input == '2' or 'exit' in user_input or 'Exit' in user_input:
         # Remove everything from the conversation state
         conversation_state_collection.delete_one({"phone_number": phone_number})
         # Send a farewell message
-        return jsonify("Thank you for using our cab booking service. Your session has been closed.")
+        greeting_message = (
+                  "1.This number is for meeting and cab management.\n"
+                  "2.You can check  your meetings from the past dates.\n "
+                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
+                  "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
+              )
+        return jsonify(greeting_message)
         
     
 
@@ -1414,8 +1423,13 @@ def continue_conversation(text, phone_number, conversation_state):
             else:
                 # Existing session found, so delete it
                 conversation_state_collection.delete_one({"phone_number": phone_number})
-                return jsonify("You have exited the process. The previous conversation state has been removed.")
-
+                greeting_message = (
+                  "1.This number is for meeting and cab management.\n"
+                  "2.You can check  your meetings from the past dates.\n "
+                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
+                  "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
+                  )
+                return jsonify(greeting_message)
         # Handle invalid input (if user didn't enter "1" or "2")
         else:
             return jsonify("Invalid option. Please enter '1' to start over or '2' to exit.")
@@ -1432,7 +1446,7 @@ def continue_conversation(text, phone_number, conversation_state):
         ending_time_24h = convert_to_24_hour_format(ending_time)
 
         if not ending_time_24h:
-            return jsonify("Invalid time format. Please provide a valid time in 'HH:MM AM/PM' format.")
+            return jsonify("Invalid time format. Please provide a valid time in 'HH:MMam/pm' format. like(10:15am/4:15pm)")
 
         print(f"Received ending time in 24-hour format: {ending_time_24h}")
 
@@ -1491,7 +1505,9 @@ def continue_conversation(text, phone_number, conversation_state):
         new_meeting_date = converted_dates[0]
         validation_error = validate_meeting_date(new_meeting_date)
         new_meeting_date_obj = datetime.strptime(new_meeting_date, '%d/%m/%Y').date()
-        current_date = datetime.now().date()
+        tz = pytz.timezone('Asia/Kolkata')
+        current_time = datetime.now(tz).time()
+        current_date = datetime.now(tz).date()
         if current_date > new_meeting_date_obj :
             return jsonify( "Please provide a date that is not in the past.")
 
@@ -1520,7 +1536,7 @@ def continue_conversation(text, phone_number, conversation_state):
 
       new_starting_time_24h = convert_to_24_hour_format(new_starting_time)
       if not new_starting_time_24h:
-          return jsonify("Invalid time format. Please provide the starting time in 'HH:MM AM/PM' format.")
+          return jsonify("Invalid time format. Please provide the starting time in 'HH:MMam/pm' format.")
 
       # Retrieve the meeting date from the conversation state
       meeting_date_str = conversation_state.get('meeting_date')
@@ -1531,7 +1547,9 @@ def continue_conversation(text, phone_number, conversation_state):
       meeting_date = datetime.strptime(meeting_date_str, '%d/%m/%Y').date()
 
       # Check if the meeting date is today
-      current_date = datetime.now(local_tz).date()
+      tz = pytz.timezone('Asia/Kolkata')
+      current_time = datetime.now(tz).time()
+      current_date = datetime.now(tz).date()
 
       if meeting_date == current_date:
           # If the meeting is today, get the current time in the correct timezone
@@ -1566,7 +1584,7 @@ def continue_conversation(text, phone_number, conversation_state):
 
         new_ending_time_24h = convert_to_24_hour_format(new_ending_time)
         if not new_ending_time_24h:
-            return jsonify( "Invalid time format. Please provide the ending time in 'HH:MM AM/PM' format.")
+            return jsonify( "Invalid time format. Please provide the ending time in 'HH:MMam/pm' format. like(10:24am/11:15pm)")
 
         # Retrieve starting time, hall name, and meeting date from the conversation state
         new_starting_time_24h = conversation_state.get('starting_time')
