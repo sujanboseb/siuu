@@ -135,8 +135,13 @@ def handle_message():
         conversation_state_collection.delete_one({"phone_number": phone_number})
         print(f"Conversation state for {phone_number} has been removed.")
 
-        # Notify the user that the conversation has been reset
-        return jsonify("Old conversation state has been removed.")
+        greeting_message = (
+                  "1.This number is for meeting and cab management.\n"
+                  "2.You can check  your meetings from the past dates.\n "
+                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
+                  "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
+              )
+        return jsonify(greeting_message
 
     # Check for existing conversation state
     conversation_state = conversation_state_collection.find_one({"phone_number": phone_number})
