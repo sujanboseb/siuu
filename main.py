@@ -830,6 +830,7 @@ def continue_conversation(text, phone_number, conversation_state):
             )
             print("Updated state to 'asking_ending_time'")
             return jsonify("Please provide the meeting ending time in **h:mmam/pm (e.g., 3:00pm/4:15pm)** format.")
+        return check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting_time, ending_time)
 
     if state == 'asking_cab_booking_id':
         # Convert input text to uppercase to handle case sensitivity
