@@ -20,7 +20,7 @@ meeting_booking_collection = db['meeting_booking']
 cab_booking_collection=db['cab_booking']
 local_tz='Asia/Kolkata'
 # Predefined hall names
-hall_names_with_webex = ["New York", "Mumbai", "Huston", "Amsterdam", "Delhi", "Tokyo", "Chicago"]
+hall_names_with_webex = ["NewYork", "Mumbai", "Huston", "Amsterdam", "Delhi", "Tokyo", "Chicago"]
 small_halls = ["0a", "0b", "0c", "1a", "1b", "1c", "2a", "2b", "2c"]
 
 
@@ -1423,7 +1423,7 @@ def continue_conversation(text, phone_number, conversation_state):
                     upsert=True
                 )
                 return jsonify("Starting a new booking process. Please provide the hall name. "
-                            "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
+                            "Available halls are: NewYork, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
             else:
                 # Session exists, so clear previous data and set to ask for hall name
                 conversation_state_collection.update_one(
@@ -1440,7 +1440,7 @@ def continue_conversation(text, phone_number, conversation_state):
                     }}
                 )
                 return jsonify("Starting over. Please provide the hall name. "
-                            "Available halls are: New York, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
+                            "Available halls are: NewYork, Mumbai, Huston, Amsterdam, Delhi, Tokyo, Chicago, 0a, 0b, 0c, 1a, 1b, 1c, 2a, 2b, 2c.")
 
         # If user chose to exit (input "2")
         elif user_input in ["2", "exit"]:
@@ -1453,8 +1453,8 @@ def continue_conversation(text, phone_number, conversation_state):
                 greeting_message = (
                   "1.This number is for meeting and cab management.\n"
                   "2.You can check  your meetings from the past dates.\n "
-                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
-                  "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
+                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the * time *  in *'hh:mmam/pm'* format.\n"
+                  "4.if the text has been *STOP* means then u can satrt new conversation ok\n"
                   )
                 return jsonify(greeting_message)
         # Handle invalid input (if user didn't enter "1" or "2")
@@ -1883,7 +1883,7 @@ def recommend_available_halls(phone_number, conversation_state):
     })
 
     # Find all halls that are not in the list of booked halls
-    all_halls = ['New York', 'Mumbai', 'Houston', 'Amsterdam', 'Delhi', 'Tokyo', 'Chicago', '0a', '0b', '0c', '1a', '1b', '1c', '2a', '2b', '2c']
+    all_halls = ['NewYork', 'Mumbai', 'Houston', 'Amsterdam', 'Delhi', 'Tokyo', 'Chicago', '0a', '0b', '0c', '1a', '1b', '1c', '2a', '2b', '2c']
     available_halls = [hall for hall in all_halls if hall not in booked_halls]
 
     # Update the state to 'recommending_hall'
