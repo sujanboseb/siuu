@@ -754,62 +754,70 @@ def continue_conversation(text, phone_number, conversation_state):
     print(f"Conversation state data: {conversation_state}")
 
     if state == 'asking_hall_name':
-        hall_name = text.title().strip()  # Normalize input
-        
+        hall_name = text.title().strip()  # Normalize input (capitalize and remove extra spaces)
+
         # Split the hall names provided by the user by commas or other delimiters
         hall_names_provided = re.split(r'[,;\s]+', hall_name)  # Split by commas, semicolons, spaces, etc.
         
         # Remove empty strings from the list in case of extra spaces
         hall_names_provided = list(filter(None, hall_names_provided))
-    
+        
+        # Debugging output
+        print(f"Normalized hall names provided: {hall_names_provided}")
+        
         # Check if more than one hall name is provided
         if len(hall_names_provided) > 1:
             return jsonify("Multiple hall names detected. Please enter only one hall name.")
-    
+        
         # Get the first and only hall name (since we've ensured only one is provided)
         hall_name = hall_names_provided[0]
         print(f"Received hall name: {hall_name}")
-    
+        
+        # Normalize hall name (in case of issues with spaces, special characters, etc.)
+        hall_name = hall_name.strip().lower()  # Remove extra spaces and make it lowercase for comparison
+        
+        # List of valid hall names, normalized for comparison
+        valid_hall_names = [name.lower() for name in hall_names_with_webex + small_halls]
+        
         # Check if the hall name is valid
-        if hall_name not in hall_names_with_webex + small_halls:
+        if hall_name not in valid_hall_names:
             return jsonify("Invalid hall name. Please choose from the available options.")
-    
+        
         # Update the conversation state with the provided hall name
         conversation_state_collection.update_one(
             {"phone_number": phone_number},
             {"$set": {"hall_name": hall_name}}
         )
+        
+        # Retrieve other conversation state values
         meeting_date = conversation_state.get('meeting_date')
         starting_time = conversation_state.get('starting_time')
         ending_time = conversation_state.get('ending_time')
-
+        
+        # Process the state and ask for missing details
         if not meeting_date:
             conversation_state_collection.update_one(
                 {"phone_number": phone_number},
                 {"$set": {"state": "asking_meeting_date"}}
             )
             print("Updated state to 'asking_meeting_date'")
-            return jsonify("Please provide the  meeting booking date in **dd/mm/yyyy** format")
-
+            return jsonify("Please provide the meeting booking date in **dd/mm/yyyy** format")
+        
         elif not starting_time:
             conversation_state_collection.update_one(
                 {"phone_number": phone_number},
                 {"$set": {"state": "asking_starting_time"}}
             )
             print("Updated state to 'asking_starting_time'")
-            return jsonify( "Please provide the meeting starting time in **h:mmam/pm(3:00pm/ 4:15pm)** format.")
-
+            return jsonify("Please provide the meeting starting time in **h:mmam/pm (e.g., 3:00pm/4:15pm)** format.")
+        
         elif not ending_time:
             conversation_state_collection.update_one(
                 {"phone_number": phone_number},
                 {"$set": {"state": "asking_ending_time"}}
             )
             print("Updated state to 'asking_ending_time'")
-            return jsonify( "Please provide the meeting ending time in **h:mmam/pm(3:00pm/ 4:15pm)** format.")
-
-        else:
-            # Proceed with booking or conflict check
-            return check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting_time, ending_time)
+            return jsonify("Please provide the meeting ending time in **h:mmam/pm (e.g., 3:00pm/4:15pm)** format.")
 
     if state == 'asking_cab_booking_id':
         # Convert input text to uppercase to handle case sensitivity
