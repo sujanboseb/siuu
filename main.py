@@ -1061,7 +1061,13 @@ def continue_conversation(text, phone_number, conversation_state):
         elif selected_option == "exit" or selected_option == "2":
             # Remove conversation state and exit the conversation
             conversation_state_collection.delete_one({"phone_number": phone_number})
-            return jsonify("Thank you! The conversation has been ended.")
+            greeting_message = (
+                  "1.This number is for meeting and cab management.\n"
+                  "2.You can check  your meetings from the past dates.\n "
+                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
+                  "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
+              )
+            return jsonify(greeting_message)
 
 
 
@@ -1109,7 +1115,13 @@ def continue_conversation(text, phone_number, conversation_state):
         if selected_option.lower() == "exit":
             # Clear the conversation state for the user (end the session)
             conversation_state_collection.delete_one({"phone_number": phone_number})
-            return jsonify("Thank you! The conversation has been ended.")
+            greeting_message = (
+                  "1.This number is for meeting and cab management.\n"
+                  "2.You can check  your meetings from the past dates.\n "
+                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
+                  "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
+              )
+            return jsonify(greeting_message)
         
         else:
             # Determine the cab name based on the selected option
