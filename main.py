@@ -1200,6 +1200,14 @@ def continue_conversation(text, phone_number, conversation_state):
       meeting_date_obj = datetime.strptime(meeting_date, '%d/%m/%Y').date()
       meeting_year = meeting_date_obj.year
       future_year_limit = 2024
+      if intent == "list_cabs_booked":
+        print("Received list_cabs_booked intent")
+        return handle_cab_booking_stats(phone_number, meeting_date)
+    
+      elif intent == "list_meetings_booked":
+        print("Received list_meetings_booked intent")
+        return handle_meeting_booking_stats(phone_number, meeting_date)
+
       if meeting_year > future_year_limit:
             return jsonify(f"Please do not provide a date in the future beyond {future_year_limit}.")
 
@@ -1258,13 +1266,6 @@ def continue_conversation(text, phone_number, conversation_state):
           else:
               print(f"[DEBUG] Proceeding to cab booking")
               return handle_cab_selection(phone_number,starting_time,meeting_date)
-
-      elif intent =="list_cabs_booked":
-          print(f"Received list_cabs_booked intent")
-          return handle_cab_booking_stats(phone_number,meeting_date)
-      elif intent =="list_meetings_booked":
-          print(f"Received meeting_booked intent")
-          return handle_meeting_booking_stats(phone_number,meeting_date)
 
 
 
