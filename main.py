@@ -1233,7 +1233,7 @@ def continue_conversation(text, phone_number, conversation_state):
                   {"$set": {"meeting_date": meeting_date, "state": "asking_starting_time"}}
               )
               print("Updated state to 'asking_starting_time'")
-              return jsonify("Please provide the scab booking time in **h:mm am/pm(3:00pm/ 4:15pm)** format. but remember time should be in 6:30pm and 7:30pm")
+              return jsonify("Please provide the cab booking time in **h:mmam/pm(3:00pm/ 4:15pm)** format. but remember time should be in 6:30pm and 7:30pm")
           else:
               print(f"[DEBUG] Proceeding to cab booking")
               return handle_cab_selection(phone_number,starting_time,meeting_date)
