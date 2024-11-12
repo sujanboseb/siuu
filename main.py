@@ -626,11 +626,11 @@ def ask_for_entity(phone_number, entity, intent, intent_data=None):
     elif intent == "meeting_booking":
         if entity == "starting_time":
             # Ask for meeting starting time in the specific format
-            return jsonify("Please provide the meeting starting time in **h:mm am/pm (e.g., 3:00pm/4:15pm)** format.")
+            return jsonify("Please provide the meeting starting time in **h:mmam/pm (e.g., 3:00pm/4:15pm)** format.")
         
         elif entity == "ending_time":
             # Ask for meeting ending time in the specific format
-            return jsonify("Please provide the meeting ending time in **h:mm am/pm (e.g., 3:00pm/4:15pm)** format.")
+            return jsonify("Please provide the meeting ending time in **h:mmam/pm (e.g., 3:00pm/4:15pm)** format.")
 
     # If no specific intent-entity match, fall back to general cases
     if entity == "meeting_date":
@@ -789,7 +789,7 @@ def continue_conversation(text, phone_number, conversation_state):
                 {"$set": {"state": "asking_meeting_date"}}
             )
             print("Updated state to 'asking_meeting_date'")
-            return jsonify("Please provide the meeting date in **dd/mm/yyyy** format")
+            return jsonify("Please provide the  meeting booking date in **dd/mm/yyyy** format")
 
         elif not starting_time:
             conversation_state_collection.update_one(
@@ -797,7 +797,7 @@ def continue_conversation(text, phone_number, conversation_state):
                 {"$set": {"state": "asking_starting_time"}}
             )
             print("Updated state to 'asking_starting_time'")
-            return jsonify( "Please provide the starting time in **h:mm am/pm(3:00pm/ 4:15pm)** format.")
+            return jsonify( "Please provide the meeting starting time in **h:mmam/pm(3:00pm/ 4:15pm)** format.")
 
         elif not ending_time:
             conversation_state_collection.update_one(
@@ -805,7 +805,7 @@ def continue_conversation(text, phone_number, conversation_state):
                 {"$set": {"state": "asking_ending_time"}}
             )
             print("Updated state to 'asking_ending_time'")
-            return jsonify( "Please provide the ending time in **h:mm am/pm(3:00pm/ 4:15pm)** format.")
+            return jsonify( "Please provide the meeting ending time in **h:mmam/pm(3:00pm/ 4:15pm)** format.")
 
         else:
             # Proceed with booking or conflict check
@@ -1209,7 +1209,7 @@ def continue_conversation(text, phone_number, conversation_state):
                   {"$set": {"meeting_date": meeting_date, "state": "asking_starting_time"}}
               )
               print("Updated state to 'asking_starting_time'")
-              return jsonify("Please provide the starting time in **h:mmam/pm(3:00pm/ 4:15pm)** format.")
+              return jsonify("Please provide the  meeting starting time in **h:mmam/pm(3:00pm/ 4:15pm)** format.")
 
           elif not ending_time:
               conversation_state_collection.update_one(
@@ -1217,7 +1217,7 @@ def continue_conversation(text, phone_number, conversation_state):
                   {"$set": {"meeting_date": meeting_date, "state": "asking_ending_time"}}
               )
               print("Updated state to 'asking_ending_time'")
-              return jsonify( "Please provide the ending time in **h:mmam/pm(3:00pm/ 4:15pm)** format.")
+              return jsonify( "Please provide the meeting ending time in **h:mmam/pm(3:00pm/ 4:15pm)** format.")
 
           else:
               return check_for_conflicts_and_book(phone_number, hall_name, meeting_date, starting_time, ending_time)
@@ -1233,7 +1233,7 @@ def continue_conversation(text, phone_number, conversation_state):
                   {"$set": {"meeting_date": meeting_date, "state": "asking_starting_time"}}
               )
               print("Updated state to 'asking_starting_time'")
-              return jsonify("Please provide the starting time in **h:mm am/pm(3:00pm/ 4:15pm)** format.")
+              return jsonify("Please provide the scab booking time in **h:mm am/pm(3:00pm/ 4:15pm)** format. but remember time should be in 6:30pm and 7:30pm")
           else:
               print(f"[DEBUG] Proceeding to cab booking")
               return handle_cab_selection(phone_number,starting_time,meeting_date)
@@ -1314,7 +1314,7 @@ def continue_conversation(text, phone_number, conversation_state):
                 }}
             )
             print("Updated state to 'asking_ending_time'")
-            return jsonify("Please provide the ending time in **h:mmam/pm like  this one(3:00pm/ 4:15pm)** format.")
+            return jsonify("Please provide the  meeting ending time in **h:mmam/pm like  this one(3:00pm/ 4:15pm)** format.")
 
         elif intent == 'cab_booking':
             # Save the validated starting time in conversation state
@@ -1603,7 +1603,7 @@ def continue_conversation(text, phone_number, conversation_state):
 
         new_ending_time_24h = convert_to_24_hour_format(new_ending_time)
         if not new_ending_time_24h:
-            return jsonify( "Invalid time format. Please provide the ending time in 'HH:MMam/pm' format. like(10:24am/11:15pm)")
+            return jsonify( "Invalid time format. Please provide the  meeting ending time in 'HH:MMam/pm' format. like(10:24am/11:15pm)")
 
         # Retrieve starting time, hall name, and meeting date from the conversation state
         new_starting_time_24h = conversation_state.get('starting_time')
