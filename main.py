@@ -136,14 +136,7 @@ def handle_message():
         print(f"Conversation state for {phone_number} has been removed.")
 
         # Notify the user that the conversation has been reset
-        greeting_message = (
-                  "1.This number is for meeting and cab management.\n"
-                  "2.You can check  your meetings from the past dates(upto 7 dates  past only).\n "
-                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
-                  "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
-                  "5.dont enter the word with *bold format* because our system cant able to understand that\n"
-              )
-        return jsonify(greeting_message)
+        return jsonify("Old conversation state has been removed.")
 
     # Check for existing conversation state
     conversation_state = conversation_state_collection.find_one({"phone_number": phone_number})
@@ -193,10 +186,9 @@ def handle_message():
               # Respond with the message for meeting and cab management
               greeting_message = (
                   "1.This number is for meeting and cab management.\n"
-                  "2.You can check  your meetings from the past dates(upto 7 dates  past only).\n "
+                  "2.You can check  your meetings from the past dates.\n "
                   "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
                   "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
-                  "5. dont enter the word with *bold format* because our system cant able to understand that\n"
               )
               return jsonify(greeting_message)
 
@@ -231,15 +223,15 @@ def handle_message():
 
             elif intent =="cab_booking":
               meeting_date = intent_data.get('meeting_date')
-              cab_booking_time = intent_data.get('cab_booking_time')
+              starting_time = intent_data.get('starting_time')
 
               # Ask for missing entities in sequence
               if not meeting_date:
                   return ask_for_entity(phone_number, 'meeting_date', intent_data)
-              elif not cab_booking_time:
-                  return ask_for_entity(phone_number, 'cab_booking_time', intent_data)
+              elif not starting_time:
+                  return ask_for_entity(phone_number, 'starting_time', intent_data)
                   # If all entities are present, proceed with booking
-              return handle_cab_selection(phone_number, cab_booking_time, meeting_date)
+              return handle_cab_selection(phone_number, starting_time, meeting_date)
 
             else:
                 return jsonify("Unhandled intent. Please provide more information.")
@@ -357,7 +349,7 @@ def handle_cab_booking_stats(phone_number, meeting_date):
     return jsonify(response_message)
 
 
-def is_valid_time_for_cabs(cab_booking_time):
+def is_valid_time_for_cabs(starting_time):
     # Define allowed times for the cabs
     allowed_times = ["18:30", "19:30"]
     return starting_time.strftime("%H:%M") in allowed_times
@@ -649,7 +641,7 @@ def generate_unique_ids(existing_ids):
 
 
 
-def handle_cab_selection(phone_number, cab_booking_time, meeting_date):
+def handle_cab_selection(phone_number, starting_time, meeting_date):
     try:
         # Check if there's already a cab booking for the same meeting date and phone number
         existing_booking = cab_booking_collection.find_one({
@@ -662,12 +654,12 @@ def handle_cab_selection(phone_number, cab_booking_time, meeting_date):
             booking_id = existing_booking.get("booking_id")  # Assuming booking ID is the document's _id field
             drop_off_point = existing_booking.get("dropping_point", "not specified")
             print(f"Booking ID: {booking_id}, Drop-off Point: {drop_off_point}")
-            cab_booking_time=existing_booking.get("cab_booking_time","not specified")
-            print(f"Starting Time: {cab_booking_time}")
+            starting_times=existing_booking.get("starting_time","not specified")
+            print(f"Starting Time: {starting_time}")
 
             # Inform the user that they already have a booking
             message = (f"You already have a cab booked on {meeting_date} "
-                       f"with Booking ID: *{booking_id}*, drop-off point: *{drop_off_point}*. time:{cab_booking_time} "
+                       f"with Booking ID: *{booking_id}*, drop-off point: *{drop_off_point}*. time:{starting_times} "
                        "Please enter the one of the following option number or its value or its highlighted word:\n"
                        "*1)*  *Re-enter* the details starting from the meeting date \n"
                        "*2)*  *Exit* \n")
@@ -691,7 +683,7 @@ def handle_cab_selection(phone_number, cab_booking_time, meeting_date):
             {"phone_number": phone_number},
             {"$set": {
                 "state": "asking_dropoff_point",
-                "starting_time": cab_booking_time,
+                "starting_time": starting_time,
                 "meeting_date": meeting_date,
                 "points": points
             }},
@@ -925,8 +917,8 @@ def continue_conversation(text, phone_number, conversation_state):
         print(f"Valid drop-off point selected: {selected_dropoff_point}")
     
         # Fetch the starting time and booking date from the conversation state
-        cab_booking_time_str = conversation_state.get('cab_booking_time')
-        cab_booking_time = datetime.strptime(cab_booking_time_str, "%H:%M").time()
+        starting_time_str = conversation_state.get('starting_time')
+        starting_time = datetime.strptime(starting_time_str, "%H:%M").time()
     
         # Fetch the booking date from the conversation state (assuming the format is dd/mm/yyyy)
         booking_date_str = conversation_state.get('meeting_date')  # Assume meeting_date is stored as string in format 'dd/mm/yyyy'
@@ -947,8 +939,8 @@ def continue_conversation(text, phone_number, conversation_state):
     
         # Check if the booking is for today and compare current time with the starting time
         if booking_date == current_date:  # Only check if booking is for today
-            if cab_booking_time == datetime.strptime("18:30", "%H:%M").time():
-                if current_time > cab_booking_time:
+            if starting_time == datetime.strptime("18:30", "%H:%M").time():
+                if current_time > starting_time:
                     return ask_user_to_wait_or_exit(phone_number, "The cab will not arrive as it has already left. Please choose options: 1) **Cab 2** 2) **Exit**.") 
     
                     # Update the state for asking late 6:30 batch
@@ -961,20 +953,20 @@ def continue_conversation(text, phone_number, conversation_state):
                         upsert=True
                     )
     
-            elif cab_booking_time == datetime.strptime("19:30", "%H:%M").time():
-                if current_time > cab_booking_time:
+            elif starting_time == datetime.strptime("19:30", "%H:%M").time():
+                if current_time > starting_time:
                     conversation_state_collection.delete_one({"phone_number": phone_number})  # Remove conversation state
                     return jsonify("Both cabs have already left. Please contact the administrative office. The conversation state has been removed.")
     
         # Define available cabs based on the starting time and user drop-off point
         available_cabs = []
     
-        if cab_booking_time <= datetime.strptime("18:30", "%H:%M").time():
+        if starting_time <= datetime.strptime("18:30", "%H:%M").time():
             if selected_dropoff_point in cab1_stops:
                 available_cabs.append("Cab 1")
             if selected_dropoff_point in cab2_stops:
                 available_cabs.append("Cab 2")
-        elif datetime.strptime("18:30", "%H:%M").time() < cab_booking_time <= datetime.strptime("19:30", "%H:%M").time():
+        elif datetime.strptime("18:30", "%H:%M").time() < starting_time <= datetime.strptime("19:30", "%H:%M").time():
             if selected_dropoff_point in cab2_stops:
                 available_cabs.append("Cab 2")
     
@@ -1039,7 +1031,7 @@ def continue_conversation(text, phone_number, conversation_state):
                 "booking_id": booking_id,
                 "phone_number": phone_number,
                 "cab_name": cab_name,
-                "cab_booking_time": conversation_state.get('cab_booking_time'),
+                "starting_time": conversation_state.get('starting_time'),
                 "meeting_date": conversation_state.get('meeting_date'),
                 "dropping_point": conversation_state.get('dropping_point'),
                 "status":"cab_has_been_booked"
@@ -1100,14 +1092,7 @@ def continue_conversation(text, phone_number, conversation_state):
         if selected_option.lower() == "exit":
             # Clear the conversation state for the user (end the session)
             conversation_state_collection.delete_one({"phone_number": phone_number})
-            greeting_message = (
-                  "1.This number is for meeting and cab management.\n"
-                  "2.You can check  your meetings from the past dates(upto 7 dates  past only).\n "
-                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
-                  "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
-                  "5. dont enter the word with *bold format* because our system cant able to understand that\n"
-              )
-            return jsonify(greeting_message)
+            return jsonify("Thank you! The conversation has been ended.")
         
         else:
             # Determine the cab name based on the selected option
@@ -1122,7 +1107,7 @@ def continue_conversation(text, phone_number, conversation_state):
                 "booking_id": booking_id,
                 "phone_number": phone_number,
                 "cab_name": cab_name,
-                "cab_booking_time": conversation_state.get('cab_booking_time'),
+                "starting_time": conversation_state.get('starting_time'),
                 "meeting_date": conversation_state.get('meeting_date'),
                 "dropping_point": conversation_state.get('dropping_point'),
                 "status":"cab_has_been_booked"
@@ -1246,7 +1231,7 @@ def continue_conversation(text, phone_number, conversation_state):
         # Convert the starting time to 24-hour format
         starting_time_24h = convert_to_24_hour_format(starting_time)
         if not starting_time_24h:
-            return jsonify("Invalid time format. Please provide a valid time in 'HH:MMAM/PM' format.")
+            return jsonify("Invalid time format. Please provide a valid time in 'HH:MM AM/PM' format.")
 
         print(f"Received starting time in 24-hour format: {starting_time_24h}")
 
@@ -1257,13 +1242,13 @@ def continue_conversation(text, phone_number, conversation_state):
 
         # Convert the meeting date string to a date object
         meeting_date = datetime.strptime(meeting_date_str, '%d/%m/%Y').date()
-        tz = pytz.timezone('Asia/Kolkata')
-        current_time = datetime.now(tz).time()
+
         # Check if the meeting date is today
-        current_date = datetime.now(tz).date()
+        current_date = datetime.now().date()
 
         if meeting_date == current_date:
             # If the meeting is today, get the current time
+            current_time = datetime.now().time()
             starting_time_obj = datetime.strptime(starting_time_24h, "%H:%M").time()
 
             # Debugging logs
@@ -1290,72 +1275,54 @@ def continue_conversation(text, phone_number, conversation_state):
                 }}
             )
             print("Updated state to 'asking_ending_time'")
-            return jsonify("Please provide the ending time in **h:mmam/pm(3:00pm/ 4:15pm)** format.")
+            return jsonify("Please provide the ending time in **h:mm am/pm(3:00pm/ 4:15pm)** format.")
 
-        
-
-
-
-
-    if state == 'asking_cab_booking_time':
-        text = text.strip()
-        intent = conversation_state.get('intent')
-        print(f"Received starting time: {text}")
-
-        # Extract starting time from text
-        cab_booking_time, time_error = extract_times(text)
-        if time_error:
-            return jsonify({"message": time_error})
-
-        if not cab_booking_time:
-            return jsonify("Please provide a valid starting time.")
-
-        # Convert the starting time to 24-hour format
-        cab_booking_time_24h = convert_to_24_hour_format(cab_booking_time)
-        if not cab_booking_time_24h:
-            return jsonify("Invalid time format. Please provide a valid time in 'HH:MMAM/PM' format.")
-
-        print(f"Received starting time in 24-hour format: {cab_booking_time_24h}")
-        conversation_state_collection.update_one(
+        elif intent == 'cab_booking':
+            # Save the validated starting time in conversation state
+            conversation_state_collection.update_one(
                 {"phone_number": phone_number},
-                {"$set": {"starting_time": cab_booking_time_24h}}
+                {"$set": {"starting_time": starting_time_24h}}
             )
 
             # Debugging before calling complete_cab_booking
-        print(f"[DEBUG] Starting cab booking process.")
-        print(f"Phone number: {phone_number}")
-        print(f"Meeting date: {meeting_date}")
-        print(f"cab time (24-hour format): {cab_booking_time_24h}")
+            print(f"[DEBUG] Starting cab booking process.")
+            print(f"Phone number: {phone_number}")
+            print(f"Meeting date: {meeting_date}")
+            print(f"Starting time (24-hour format): {starting_time_24h}")
 
-        meeting_date=meeting_date_str
-        print(f"Meeting date correted form: {meeting_date}")
+            meeting_date=meeting_date_str
+            print(f"Meeting date correted form: {meeting_date}")
 
             # Proceed to complete the cab booking
-        cab_booking_time = cab_booking_time_24h  # Pass the 24-hour format time
-        valid_times = ["18:30", "19:30"]
+            starting_time = starting_time_24h  # Pass the 24-hour format time
+            valid_times = ["18:30", "19:30"]
 
             # Check if the entered time is valid
-        if cab_booking_time not in valid_times:
+            if starting_time not in valid_times:
                 # Raise error message if the time is not 18:30 or 19:30
-            error_message = "Cabs are not available at the selected time. Please enter a valid time: 6:30AM or 7:3oPM."
-            print(error_message)
+                error_message = "Cabs are not available at the selected time. Please enter a valid time: 6:30pm or 7:30."
+                print(error_message)
 
                 # Remove the 'starting_time' from the conversation state
-        conversation_state_collection.update_one(
-            {"phone_number": phone_number},
-            {"$unset": {"cab_booking_time": ""}, "$set": {"state": "asking_cab_booking_time"}},
-            upsert=True
-            )
+                conversation_state_collection.update_one(
+                    {"phone_number": phone_number},
+                    {"$unset": {"starting_time": ""}, "$set": {"state": "asking_starting_time"}},
+                    upsert=True
+                )
 
-        return jsonify(error_message)
+                return jsonify(error_message)
+
+
 
             # Proceed to handle cab selection after valid time check
-        print(f"Proceeding to complete cab booking with starting time: {cab_booking_time}")
-        return handle_cab_selection(phone_number, cab_booking_time, meeting_date)
+            print(f"Proceeding to complete cab booking with starting time: {starting_time}")
+            return handle_cab_selection(phone_number, starting_time, meeting_date)
 
-        
-        
-      
+
+
+
+
+
 
     if state == 'asking_cab_validation':
       user_input = text.strip().lower()
@@ -1369,7 +1336,7 @@ def continue_conversation(text, phone_number, conversation_state):
             "intent": "cab_booking"  # Retain the intent
         }, "$unset": {
             "meeting_date": "",
-            "cab_booking_time": "",
+            "starting_time": "",
         }},
         upsert=True
         )
