@@ -141,7 +141,7 @@ def handle_message():
                   "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
                   "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
               )
-        return jsonify(greeting_message
+        return jsonify(greeting_message)
 
     # Check for existing conversation state
     conversation_state = conversation_state_collection.find_one({"phone_number": phone_number})
