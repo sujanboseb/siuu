@@ -612,27 +612,34 @@ def ask_for_entity(phone_number, entity, intent, intent_data=None):
         upsert=True
     )
 
-    # Check specific intent-entity combinations first
+    # Check specific intent-entity combinations for cab booking
     if intent == "cab_booking":
-        if entity == "starting_time":
-            # Special message for cab booking starting time
-            return jsonify("Please provide the cab booking time. The time must be either 6:30pm or 7:30pm.")
-        
-        elif entity == "meeting_date":
-            # Special message for cab booking date
+        if entity == "meeting_date":
+            # Ask for cab booking date in specific format
             return jsonify("Please provide the cab booking date in **dd/mm/yyyy** format.")
+        
+        elif entity == "starting_time":
+            # Ask for cab booking time with specific time options
+            return jsonify("Please provide the cab booking time. The time must be either 6:30pm or 7:30pm.")
 
-    # If no specific intent-entity combination is matched, fall back to general cases
+    # Check specific intent-entity combinations for meeting booking
+    elif intent == "meeting_booking":
+        if entity == "starting_time":
+            # Ask for meeting starting time in the specific format
+            return jsonify("Please provide the meeting starting time in **h:mm am/pm (e.g., 3:00pm/4:15pm)** format.")
+        
+        elif entity == "ending_time":
+            # Ask for meeting ending time in the specific format
+            return jsonify("Please provide the meeting ending time in **h:mm am/pm (e.g., 3:00pm/4:15pm)** format.")
+
+    # If no specific intent-entity match, fall back to general cases
     if entity == "meeting_date":
         # General message for meeting date format
         return jsonify("Please provide the meeting date in **dd/mm/yyyy** format.")
 
-    elif entity in ["starting_time", "ending_time"]:
-        # General message for time format (e.g., 3pm/2:15pm)
-        return jsonify(f"Please provide the {entity.replace('_', ' ')} in **hh:mm am/pm** format.")
-
     # Default message for other entities
     return jsonify(f"Please provide the {entity.replace('_', ' ')}.")
+
 
 
 
