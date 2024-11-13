@@ -137,9 +137,10 @@ def handle_message():
 
         greeting_message = (
                   "1.This number is for meeting and cab management.\n"
-                  "2.You can check  your meetings from the past dates.\n "
-                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
+                  "2.You can check  your meetings and cab bookings from the past dates.\n "
+                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mmam/pm'** format.\n"
                   "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
+                  "5.dont enter the bold lettes system cant able to identify those\n"
               )
         return jsonify(greeting_message)
 
@@ -1091,9 +1092,10 @@ def continue_conversation(text, phone_number, conversation_state):
             conversation_state_collection.delete_one({"phone_number": phone_number})
             greeting_message = (
                   "1.This number is for meeting and cab management.\n"
-                  "2.You can check  your meetings from the past dates.\n "
-                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
+                  "2.You can check  your meetings and cab bookingsfrom the past dates.\n "
+                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the * time *  in *'hh:mmam/pm'* format.\n"
                   "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
+                  "5.dont enter the bold letters system cant able to identify those\n"
               )
             return jsonify(greeting_message)
 
@@ -1145,9 +1147,10 @@ def continue_conversation(text, phone_number, conversation_state):
             conversation_state_collection.delete_one({"phone_number": phone_number})
             greeting_message = (
                   "1.This number is for meeting and cab management.\n"
-                  "2.You can check  your meetings from the past dates.\n "
-                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
+                  "2.You can check  your meetings and cab bookings from the past dates.\n "
+                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the *time*  in *'hh:mmam/pm'* format.\n"
                   "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
+                  "5.dont enter the bold letters system cant able to identify those\n"
               )
             return jsonify(greeting_message)
         
@@ -1403,16 +1406,17 @@ def continue_conversation(text, phone_number, conversation_state):
         )
 
     # Ask for the meeting date again
-        return jsonify("Please provide the cab booking date in **dd/mm/yyyy** format.")
+        return jsonify("Please provide the cab booking date in *dd/mm/yyyy* format.")
       elif user_input == '2' or 'exit' in user_input or 'Exit' in user_input:
         # Remove everything from the conversation state
         conversation_state_collection.delete_one({"phone_number": phone_number})
         # Send a farewell message
         greeting_message = (
                   "1.This number is for meeting and cab management.\n"
-                  "2.You can check  your meetings from the past dates.\n "
-                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the ** time **  in **'hh:mm AM/PM'** format.\n"
+                  "2.You can check  your meetings and cab bookings from the past 7 dates.\n "
+                  "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the * time *  in *'hh:mmam/pm'* format.\n"
                   "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
+                  "5. DOnt provide *bold* letters system cant identify those\n".
               )
         return jsonify(greeting_message)
         
@@ -1466,9 +1470,10 @@ def continue_conversation(text, phone_number, conversation_state):
                 conversation_state_collection.delete_one({"phone_number": phone_number})
                 greeting_message = (
                   "1.This number is for meeting and cab management.\n"
-                  "2.You can check  your meetings from the past dates.\n "
+                  "2.You can check  your meetings and bookings from the past 7 dates.\n "
                   "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the * time *  in *'hh:mmam/pm'* format.\n"
                   "4.if the text has been *STOP* means then u can satrt new conversation ok\n"
+                  "5.Dont enter the bold letters system cant identify those\n"
                   )
                 return jsonify(greeting_message)
         # Handle invalid input (if user didn't enter "1" or "2")
