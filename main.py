@@ -1415,8 +1415,8 @@ def continue_conversation(text, phone_number, conversation_state):
                   "2.You can check  your meetings and cab bookings from the past 7 dates.\n "
                   "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the * time *  in *'hh:mmam/pm'* format.\n"
                   "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
-                  "5. DOnt provide *bold* letters system cant identify those\n".
-              )
+                  "5. DOnt provide *bold* letters system cant identify those\n"
+                )
         return jsonify(greeting_message)
         
     
