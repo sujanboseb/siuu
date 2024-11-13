@@ -273,7 +273,7 @@ def handle_meeting_booking_stats(phone_number, meeting_date):
 
     # If no bookings are found, return a message indicating no bookings
     if len(meeting_bookings) == 0:
-        return jsonify("No meeting bookings found for your phone number in the past 7 days.")
+        return jsonify("No meeting bookings found for your phone number in the past 7 days. so please enter another date")
 
     # Create a list to store formatted booking information
     booking_list = []
@@ -327,7 +327,7 @@ def handle_cab_booking_stats(phone_number, meeting_date):
 
     # If no bookings are found, return a message indicating no bookings
     if len(cab_bookings) == 0:
-        return jsonify("No cab bookings found for your phone number in the past 7 days.")
+        return jsonify("No cab bookings found for your phone number in the past 7 days so please enter another date.")
 
     # Create a list to store formatted booking information
     booking_list = []
