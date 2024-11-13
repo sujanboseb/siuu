@@ -569,8 +569,7 @@ def ask_for_hall_name(phone_number, intent_data=None):
 
 def extract_times(input_text):
     # Time pattern to match formats like 3pm, 3:00pm, 15:00, 5:30pm, etc.
-    time_pattern = r'\b\d{1,2}:\d{2}\s*(?:am|pm|a\.m\.|p\.m\.|AM|PM|A\.M\.|P\.M\.)?|\b\d{1,2}\s*(?:am|pm|a\.m\.|p\.m\.|AM|PM|A\.M\.|P\.M\.)\b'
-
+    time_pattern = r'\b\d{1,2}:\d{2}\s*(?:am|pm)?|\b\d{1,2}\s*(?:am|pm)\b'
     # Find all time matches in the input text
     matches = re.findall(time_pattern, input_text, re.IGNORECASE)
 
