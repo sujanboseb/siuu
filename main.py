@@ -1285,7 +1285,7 @@ def continue_conversation(text, phone_number, conversation_state):
         # Extract starting time from text
         starting_time, time_error = extract_times(text)
         if time_error:
-            return jsonify({"message": time_error})
+            return jsonify(time_error)
 
         if not starting_time:
             return jsonify("Please provide a valid starting time.")
@@ -1415,7 +1415,7 @@ def continue_conversation(text, phone_number, conversation_state):
                   "2.You can check  your meetings and cab bookings from the past 7 dates.\n "
                   "3.Please provide the *meeting date* in *'dd/mm/yyyy'* format and the * time *  in *'hh:mmam/pm'* format.\n"
                   "4.if the text has been *STOP* means then u can satrt new conversation ok  \n"
-                  "5. DOnt provide *bold* letters system cant identify those\n"
+                  "5. Dont provide *bold* letters system cant identify those\n"
                 )
         return jsonify(greeting_message)
         
