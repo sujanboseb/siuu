@@ -568,12 +568,13 @@ def ask_for_hall_name(phone_number, intent_data=None):
 
 
 def extract_times(input_text):
-    # Strict pattern to capture 3pm, 5:30pm, 3:00am formats only
+    # Strict pattern to capture times like 3pm, 5:30pm, 3:00am
     time_pattern = r'\b\d{1,2}(:\d{2})?\s*(am|pm)\b'
     
     # Find all time matches
     matches = re.findall(time_pattern, input_text, re.IGNORECASE)
-    matches = [''.join(match) for match in matches]  # Join tuple results from `findall`
+    # Reconstruct valid times as strings (combine hour, minute, and am/pm)
+    matches = [match[0] + match[1] for match in matches]
 
     if len(matches) > 1:
         return None, "More than one time provided. Please provide a single time."
